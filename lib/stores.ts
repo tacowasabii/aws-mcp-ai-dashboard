@@ -1,0 +1,127 @@
+import { create } from 'zustand'
+
+export interface AWSAccount {
+  id: string
+  name: string
+  region: string
+  accessKeyId?: string
+  secretAccessKey?: string
+  isActive: boolean
+  accountId?: string
+  arn?: string
+  verified?: boolean
+}
+
+export interface ChatMessage {
+  id: string
+  type: 'user' | 'ai' | 'system'
+  content: string
+  timestamp: Date
+  accountId?: string
+}
+
+export interface BedrockConfig {
+  modelId: string
+  region: string
+  isConfigured: boolean
+}
+
+interface AppState {
+  // AWS 계정 상태
+  accounts: AWSAccount[]
+  activeAccountId: string | null
+  
+  // 채팅 상태
+  messages: ChatMessage[]
+  isLoading: boolean
+  
+  // Bedrock 설정 상태
+  bedrockConfig: BedrockConfig
+  
+  // 액션들
+  addAccount: (account: AWSAccount) => void
+  setActiveAccount: (accountId: string) => void
+  removeAccount: (accountId: string) => void
+  updateAccount: (accountId: string, updates: Partial<AWSAccount>) => void
+  
+  addMessage: (message: ChatMessage) => void
+  clearMessages: () => void
+  setLoading: (loading: boolean) => void
+  
+  setBedrockConfig: (config: Partial<BedrockConfig>) => void
+}
+
+export const useAppStore = create<AppState>((set, get) => ({
+  accounts: [],
+  activeAccountId: null,
+  messages: [],
+  isLoading: false,
+  bedrockConfig: {
+    modelId: 'us.anthropic.claude-3-7-sonnet-20250219-v1:0',
+    region: 'us-east-1',
+    isConfigured: false
+  },
+  
+  addAccount: (account) => 
+    set((state) => {
+      // 기존 활성 계정들을 비활성화
+      const updatedAccounts = state.accounts.map(acc => ({ ...acc, isActive: false }))
+      const newAccount = { ...account, isActive: true }
+      return { 
+        accounts: [...updatedAccounts, newAccount],
+        activeAccountId: newAccount.id
+      }
+    }),
+    
+  setActiveAccount: (accountId) => 
+    set((state) => ({
+      activeAccountId: accountId,
+      accounts: state.accounts.map(acc => ({
+        ...acc, 
+        isActive: acc.id === accountId
+      }))
+    })),
+    
+  removeAccount: (accountId) => 
+    set((state) => ({
+      accounts: state.accounts.filter(acc => acc.id !== accountId),
+      activeAccountId: state.activeAccountId === accountId ? null : state.activeAccountId
+    })),
+    
+  updateAccount: (accountId, updates) =>
+    set((state) => ({
+      accounts: state.accounts.map(acc => 
+        acc.id === accountId ? { ...acc, ...updates } : acc
+      )
+    })),
+    
+  addMessage: (message) => 
+    set((state) => ({ 
+      messages: [...state.messages, message] 
+    })),
+    
+  clearMessages: () => 
+    set({ messages: [] }),
+    
+  setLoading: (loading) =>
+    set({ isLoading: loading }),
+    
+  setBedrockConfig: (config) =>
+    set((state) => ({
+      bedrockConfig: { ...state.bedrockConfig, ...config }
+    }))
+}))
+
+// 편의 함수들
+export const getActiveAccount = (): AWSAccount | null => {
+  const { accounts, activeAccountId } = useAppStore.getState()
+  return accounts.find(acc => acc.id === activeAccountId) || null
+}
+
+export const generateAccountId = (): string => {
+  return `aws-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+}
+
+export const generateMessageId = (): string => {
+  return `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+}

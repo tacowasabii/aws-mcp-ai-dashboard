@@ -1,0 +1,52 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts'
+
+export async function POST(request: NextRequest) {
+  try {
+    const { accessKeyId, secretAccessKey, region } = await request.json()
+    
+    if (!accessKeyId || !secretAccessKey) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'AWS 자격 증명이 필요합니다' 
+      }, { status: 400 })
+    }
+    
+    const client = new STSClient({
+      region: region || 'us-east-1',
+      credentials: {
+        accessKeyId,
+        secretAccessKey
+      }
+    })
+    
+    const command = new GetCallerIdentityCommand({})
+    const result = await client.send(command)
+    
+    return NextResponse.json({ 
+      success: true, 
+      accountId: result.Account,
+      arn: result.Arn,
+      userId: result.UserId,
+      region: region || 'us-east-1'
+    })
+    
+  } catch (error) {
+    console.error('AWS verification failed:', error)
+    
+    let errorMessage = 'AWS 인증에 실패했습니다'
+    
+    if (error.name === 'CredentialsProviderError') {
+      errorMessage = 'AWS 자격 증명이 올바르지 않습니다'
+    } else if (error.message?.includes('InvalidUserID.NotFound')) {
+      errorMessage = 'AWS 자격 증명이 유효하지 않습니다'
+    } else if (error.message?.includes('SignatureDoesNotMatch')) {
+      errorMessage = 'AWS Secret Key가 올바르지 않습니다'
+    }
+    
+    return NextResponse.json({ 
+      success: false, 
+      error: errorMessage 
+    }, { status: 400 })
+  }
+}
