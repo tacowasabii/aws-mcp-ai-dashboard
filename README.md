@@ -1,20 +1,25 @@
 # AWS MCP AI Dashboard
 
-AWS Bedrock Claude 3.7 Sonnet과 AWS MCP를 연동한 지능형 AWS 리소스 관리 대시보드입니다.
+**실제 AWS Model Context Protocol (MCP) 서버와 연동된** 지능형 AWS 리소스 관리 대시보드입니다.
 
 ## 🚀 주요 기능
 
-- 🤖 **AI 기반 자연어 쿼리**: Claude 3.7 Sonnet을 사용한 지능형 AWS 리소스 조회
-- 🔗 **AWS MCP 통합**: Model Context Protocol을 통한 실시간 AWS API 연동
+- 🤖 **실제 AWS MCP 통합**: AWS Labs 공식 `awslabs.core-mcp-server` 사용
+- 🧠 **AI 기반 자연어 쿼리**: Claude 3.7 Sonnet을 사용한 지능형 AWS 리소스 조회
+- 🔗 **하이브리드 아키텍처**: MCP 분석 + 직접 AWS API 호출 조합
 - 🔐 **자격증명 분리**: Bedrock용(서버)과 MCP용(사용자) 자격증명 완전 분리
 - 🖥️ **EC2 인스턴스 관리**: 인스턴스 목록, 상태, 타입 조회
 - 🗂️ **S3 버킷 관리**: 버킷 목록, 생성일 조회
 - 👤 **계정 정보 조회**: AWS 계정 ID, ARN, 리전 정보 확인
-- 💾 **상태 관리**: Zustand를 통한 계정 및 채팅 상태 관리
 
-## 🆕 AI 에이전트 기능
+## 🆕 실제 MCP 기능
 
-이제 자연어로 AWS 리소스를 조회할 수 있습니다:
+이제 **진짜 AWS MCP 서버**를 사용합니다:
+
+- ✅ **AWS Labs 공식 MCP 서버**: `awslabs.core-mcp-server@latest`
+- ✅ **프롬프트 이해**: MCP의 `prompt_understanding` 도구 사용
+- ✅ **AWS 전문 지식**: 최신 AWS 문서 및 모범 사례 액세스
+- ✅ **지능적 분석**: AI가 MCP를 통해 사용자 의도 정확히 파악
 
 **예시 질문들:**
 - "현재 실행중인 EC2 인스턴스가 몇 개야?"
@@ -23,101 +28,88 @@ AWS Bedrock Claude 3.7 Sonnet과 AWS MCP를 연동한 지능형 AWS 리소스 �
 - "가장 비싼 인스턴스 타입은 뭐야?"
 - "us-west-2 리전의 리소스 현황은?"
 
-## 🔧 자격증명 구조
-
-### 🏢 서버측 (Bedrock 전용)
-- 환경변수로 고정 설정
-- 관리자가 한 번만 설정
-- Claude 3.7 Sonnet 모델 호출용
-
-### 👤 클라이언트측 (MCP 전용)
-- 사용자가 대시보드에서 입력
-- 각 사용자의 AWS 리소스 조회용
-- EC2, S3, STS API 호출용
-
-## 📁 프로젝트 구조
+## 🏗️ 아키텍처
 
 ```
-aws-mcp-ai-dashboard/
-├── app/
-│   ├── api/
-│   │   ├── aws-query/      # AI 에이전트 메인 API
-│   │   ├── aws-test/       # MCP 자격증명 테스트
-│   │   └── verify-aws/     # AWS 자격증명 검증
-│   ├── dashboard/          # 대시보드 UI
-│   └── globals.css
-├── lib/
-│   ├── bedrock-agent.ts    # AI 에이전트 핵심 로직
-│   ├── aws-mcp-tools.ts    # MCP 도구 정의 및 구현
-│   ├── aws-client.ts       # AWS 클라이언트 유틸리티
-│   └── stores.ts           # Zustand 상태 관리
-├── types/
-│   └── index.ts            # TypeScript 타입 정의
-└── components/             # React 컴포넌트
+사용자 질문 → Bedrock Claude 3.7 → AWS MCP 서버 (분석) → AWS API (조회) → 통합 응답
 ```
 
-## 📋 설치 및 실행
+1. **질문 접수**: 사용자가 자연어로 AWS 관련 질문
+2. **MCP 분석**: AWS MCP 서버가 질문을 분석하고 의도 파악
+3. **리소스 조회**: 분석 결과에 따라 적절한 AWS API 직접 호출
+4. **응답 생성**: MCP 지식 + API 결과를 바탕으로 전문적 응답 생성
 
-### 1. 의존성 설치
+## 📋 필수 요구사항
+
+### 1️⃣ **uv 패키지 매니저 설치**
 ```bash
-npm install
+# macOS/Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 또는 npm 스크립트 사용
+npm run install-uv
 ```
 
-### 2. 서버 환경변수 설정 (관리자)
-`.env.local` 파일을 생성하고 **Bedrock 전용 자격증명** 설정:
+### 2️⃣ **AWS 자격증명 설정**
+두 가지 별도 계정이 필요합니다:
 
+#### A. Bedrock 전용 계정 (서버용)
 ```env
-# AWS Bedrock 전용 자격증명 (서버 고정)
+# .env.local
 BEDROCK_ACCESS_KEY_ID=AKIA...
 BEDROCK_SECRET_ACCESS_KEY=...
 BEDROCK_REGION=us-east-1
 BEDROCK_MODEL_ID=us.anthropic.claude-3-7-sonnet-20250219-v1:0
-
-# MCP 서버 설정
-MCP_SERVER_URL=http://localhost:3001/sse
-MCP_FALLBACK_MODE=true
 ```
 
-### 3. AWS Bedrock 모델 액세스 활성화
-**Bedrock 계정**에서 Claude 3.7 Sonnet 모델 액세스를 활성화해야 합니다.
+#### B. MCP 전용 계정 (사용자 입력)
+- 대시보드에서 사용자가 직접 입력
+- EC2, S3, STS 권한 필요
 
-### 4. 개발 서버 실행
+## 🚀 설치 및 실행
+
+### 1️⃣ **의존성 설치**
 ```bash
+npm install
+```
+
+### 2️⃣ **환경변수 설정**
+`.env.local` 파일에 **Bedrock 전용 자격증명** 설정
+
+### 3️⃣ **AWS Bedrock 모델 액세스 활성화**
+AWS 콘솔에서 Claude 3.7 Sonnet 모델 액세스 활성화
+
+### 4️⃣ **전체 서버 실행 (권장)**
+```bash
+# MCP 서버 + Next.js 동시 실행
+npm run dev:full
+```
+
+### 5️⃣ **개별 서버 실행**
+```bash
+# 터미널 1: MCP HTTP 서버 실행
+npm run mcp-server
+
+# 터미널 2: Next.js 개발 서버 실행  
 npm run dev
 ```
 
-### 5. 사용자별 MCP 자격증명 입력
-- 브라우저에서 http://localhost:3000 접속
-- **각 사용자의 AWS 자격증명** 입력 (MCP용)
+### 6️⃣ **브라우저에서 테스트**
+- http://localhost:3000 접속
+- **MCP용 AWS 자격증명** 입력
 - 자연어 질문으로 AWS 리소스 조회
 
-## 🔗 API 엔드포인트
+## 🔧 서버 구성
 
-### `/api/aws-query` - AI 에이전트
-자연어 질문으로 AWS 리소스를 조회합니다.
+### MCP HTTP 서버 (포트 3001)
+- AWS MCP 서버 래퍼
+- `uvx awslabs.core-mcp-server@latest` 실행
+- HTTP API로 MCP 통신 제공
 
-```typescript
-// 요청
-{
-  "query": "실행중인 EC2 인스턴스 개수와 상태를 알려줘",
-  "credentials": {
-    "accessKeyId": "AKIA...",
-    "secretAccessKey": "...",
-    "region": "us-east-1"
-  }
-}
-
-// 응답
-{
-  "data": "현재 3개의 EC2 인스턴스가 실행중입니다..."
-}
-```
-
-### `/api/aws-test` - MCP 자격증명 테스트
-사용자 입력 자격증명의 유효성을 테스트합니다.
-
-### `/api/verify-aws` - AWS 자격증명 검증
-간단한 AWS 자격증명 검증을 수행합니다.
+### Next.js 서버 (포트 3000)  
+- 웹 대시보드
+- Bedrock Claude 3.7 Sonnet 연동
+- MCP HTTP 클라이언트 통합
 
 ## 🔒 필요한 AWS 권한
 
@@ -156,82 +148,175 @@ npm run dev
 }
 ```
 
+## 🔗 API 엔드포인트
+
+### `/api/aws-query` - 실제 MCP 통합 AI 에이전트
+```typescript
+// 요청
+{
+  "query": "실행중인 EC2 인스턴스 개수와 상태를 알려줘",
+  "credentials": {
+    "accessKeyId": "AKIA...",
+    "secretAccessKey": "...",
+    "region": "us-east-1"  
+  }
+}
+
+// 응답
+{
+  "data": "AWS MCP 분석에 따르면 현재 3개의 EC2 인스턴스가 실행중입니다...",
+  "info": "✅ 실제 AWS MCP 서버와 연동되어 처리되었습니다"
+}
+```
+
+### `/api/verify-aws` - AWS 자격증명 검증
+```bash
+# AWS 연결 테스트
+POST /api/verify-aws
+{
+  "accessKeyId": "AKIA...",
+  "secretAccessKey": "...",
+  "region": "us-east-1"
+}
+```
+
+### MCP HTTP 서버 API (포트 3001)
+```bash
+# 서버 상태 확인
+GET http://localhost:3001/health
+
+# 사용 가능한 도구 목록
+GET http://localhost:3001/tools
+
+# MCP 도구 호출
+POST http://localhost:3001/tools/call
+{
+  "name": "prompt_understanding",
+  "arguments": { "prompt": "EC2 인스턴스 조회해줘" }
+}
+
+# 프롬프트 분석
+POST http://localhost:3001/prompt/analyze  
+{
+  "prompt": "S3 버킷 현황 알려줘"
+}
+```
+
 ## 🏗️ 기술 스택
 
 - **Frontend**: Next.js 15, React 18, TypeScript
 - **AI Model**: AWS Bedrock Claude 3.7 Sonnet (서버측)
+- **MCP Server**: AWS Labs `awslabs.core-mcp-server@latest`
 - **AWS SDK**: v3 (EC2, S3, STS, Bedrock Runtime)
-- **Protocol**: Model Context Protocol (MCP)
+- **MCP Client**: Custom HTTP client for MCP communication
+- **Package Manager**: uv (for MCP server)
 - **State Management**: Zustand
-- **Data Fetching**: React Query
 - **Styling**: Tailwind CSS
-- **Icons**: Lucide React
 
-## 🔍 작동 원리
+## 🔍 작동 방식
 
+### 1. **MCP 기반 분석**
 ```
-사용자 질문 → Bedrock AI (서버 자격증명) → 도구 선택 → AWS MCP (사용자 자격증명) → 응답 생성
+사용자 질문 → AWS MCP 서버 → prompt_understanding 도구 → 의도 분석
 ```
 
-1. **질문 접수**: 사용자가 자연어로 AWS 관련 질문
-2. **AI 분석**: Bedrock Claude 3.7이 질문을 분석하고 필요한 도구 선택
-3. **MCP 호출**: 사용자 자격증명으로 해당 AWS API 호출
-4. **응답 생성**: AI가 결과를 바탕으로 자연스러운 한국어 응답 생성
+### 2. **하이브리드 실행**  
+```
+MCP 분석 결과 → 적절한 AWS API 직접 호출 → 리소스 데이터 수집
+```
 
-## 🧩 핵심 컴포넌트
-
-### `lib/bedrock-agent.ts`
-- Claude 3.7 Sonnet과의 통신 관리
-- 자연어 질문 분석 및 도구 선택
-- MCP 도구 실행 및 응답 생성
-
-### `lib/aws-mcp-tools.ts`
-- AWS MCP 도구 정의 및 구현
-- EC2, S3, STS 서비스 연동
-- 타입 안전한 AWS API 호출
-
-### `lib/aws-client.ts`
-- AWS 클라이언트 생성 유틸리티
-- 자격증명 검증 함수
-- 공통 AWS 설정 관리
-
-### `lib/stores.ts`
-- Zustand 기반 상태 관리
-- AWS 계정 및 채팅 메시지 상태
-- Bedrock 설정 관리
-
-### `types/index.ts`
-- 전체 프로젝트 TypeScript 타입 정의
-- AWS, MCP, Bedrock 관련 인터페이스
-- API 응답 및 에러 타입
+### 3. **지능적 응답**
+```
+MCP 지식 + API 결과 → Claude 3.7 Sonnet → 전문적 한국어 응답
+```
 
 ## 🐛 문제 해결
 
-### AI 에이전트 오류
+### MCP 서버 연결 실패
 ```
-Bedrock 자격증명이 서버에 설정되지 않았습니다
+❌ MCP 서버에 연결할 수 없습니다
 ```
-→ 서버 관리자가 `.env.local`에 Bedrock 자격증명 설정 필요
+**해결책:**
+1. MCP 서버 실행: `npm run mcp-server`
+2. uv 설치 확인: `uv --version`
+3. 포트 3001 사용 중인지 확인: `lsof -i :3001`
 
-### MCP 연결 실패
+### AWS MCP 서버 실행 실패
 ```
-AWS 자격 증명이 올바르지 않습니다 (MCP용)
+❌ uvx awslabs.core-mcp-server@latest 실행 실패
 ```
-→ 사용자가 입력한 AWS 자격증명 확인 필요
+**해결책:**
+1. uv 재설치: `npm run install-uv`
+2. 환경변수 확인: AWS 자격증명 설정
+3. 인터넷 연결 확인 (MCP 서버 다운로드용)
 
-### 타입 에러
+### Bedrock 모델 액세스 오류
 ```
-Cannot find module '../types'
+❌ Bedrock 모델에 대한 액세스 권한이 없습니다
 ```
-→ `npm install` 재실행 후 TypeScript 컴파일 확인
+**해결책:**
+1. AWS 콘솔 → Bedrock → Model access
+2. Claude 3.7 Sonnet 활성화
+3. us-east-1 리전 사용 확인
 
-## 💡 보안 장점
+### MCP 분석 실패시 폴백
+```
+⚠️ MCP 서버가 준비되지 않음, 기본 모드로 진행
+```
+- MCP 없이도 기본적인 AWS API 조회는 동작
+- 키워드 기반 간단 분석으로 폴백
 
-- ✅ **권한 분리**: Bedrock 권한과 MCP 권한 완전 분리
-- ✅ **최소 권한**: 각 계정은 필요한 최소 권한만 보유
-- ✅ **사용자 격리**: 각 사용자는 자신의 AWS 리소스만 조회
-- ✅ **서버 보안**: Bedrock 자격증명은 서버에만 저장
-- ✅ **타입 안전성**: TypeScript로 컴파일 타임 에러 방지
+## 📊 로그 모니터링
+
+### MCP 서버 로그
+```bash
+# MCP HTTP 서버 로그
+npm run mcp-server
+
+# 출력 예시:
+🌐 MCP HTTP 서버가 포트 3001에서 실행 중
+🚀 AWS MCP 서버 시작 중...  
+✅ MCP 서버 초기화 완료
+📥 MCP 응답: {"result": {...}}
+```
+
+### Next.js 서버 로그
+```bash
+npm run dev
+
+# 출력 예시:
+🚀 AWSBedrockAgentWithMCP 초기화 중...
+🔍 1단계: AWS MCP를 통한 질문 분석 시작...
+🎯 MCP 분석 결과: {"service": "ec2", "confidence": 0.9}
+⚡ 2단계: AWS 리소스 조회 시작...  
+📝 3단계: 최종 응답 생성 시작...
+✅ 최종 응답 생성 완료
+```
+
+## 💡 개발 팁
+
+### MCP 서버 디버깅
+```bash
+# MCP 서버 직접 실행 (디버깅용)
+uvx awslabs.core-mcp-server@latest
+
+# 환경변수와 함께 실행
+FASTMCP_LOG_LEVEL=DEBUG uvx awslabs.core-mcp-server@latest
+```
+
+### 커스텀 MCP 도구 추가
+1. `lib/http-mcp-client.ts`에서 새로운 메서드 추가
+2. `scripts/mcp-http-server.js`에서 새로운 엔드포인트 추가
+3. AWS MCP 서버 설정에서 추가 역할 활성화
+
+## 🧹 프로젝트 정리 사항
+
+### 삭제된 중복 파일들:
+- `app/api/aws-test/` → `app/api/verify-aws/`로 통합
+
+### 최적화된 컴포넌트들:
+- `mcp-connection.tsx` → 단일 API 엔드포인트 사용
+- `connection-status.tsx` → 기존 유지
 
 ## 📄 라이센스
 
@@ -239,4 +324,6 @@ MIT License
 
 ---
 
-**Made with ❤️ using AWS Bedrock Claude 3.7 Sonnet & AWS MCP**
+**🎉 실제 AWS MCP 서버와 연동된 최첨단 AI 대시보드를 경험해보세요!**
+
+*Made with ❤️ using AWS Bedrock Claude 3.7 Sonnet & AWS Labs MCP Server*

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { AWSBedrockAgent } from '../../../lib/bedrock-agent'
+import { AWSBedrockAgentWithMCP } from '../../../lib/bedrock-agent-with-mcp'
 import { AWSCredentials, AWSQueryResponse } from '../../../types'
 
 export async function POST(request: NextRequest) {
@@ -22,21 +22,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Bedrock Agent 초기화 (Bedrock은 환경변수, MCP는 사용자 자격증명)
-    const agent = new AWSBedrockAgent({
+    console.log('🚀 실제 AWS MCP와 연동된 AI 에이전트 시작...')
+
+    // 실제 MCP를 사용하는 Bedrock Agent 초기화
+    const agent = new AWSBedrockAgentWithMCP({
       accessKeyId: credentials.accessKeyId,
       secretAccessKey: credentials.secretAccessKey,
       region: credentials.region || 'us-east-1'
     })
 
-    // AI가 사용자 질문을 분석하고 AWS MCP를 통해 응답 생성
+    // AI가 AWS MCP + 직접 AWS API를 통해 지능적 응답 생성
     const response = await agent.processUserQuery(query)
     
-    const result: AWSQueryResponse = { data: response }
+    const result: AWSQueryResponse = { 
+      data: response,
+      info: '✅ 실제 AWS MCP 서버와 연동되어 처리되었습니다'
+    }
     return NextResponse.json(result)
     
   } catch (error) {
-    console.error('AWS Bedrock Agent 실패:', error)
+    console.error('❌ AWS MCP Bedrock Agent 실패:', error)
     
     let errorMessage = 'AI 에이전트 처리 실패'
     
@@ -55,6 +60,8 @@ export async function POST(request: NextRequest) {
       errorMessage = 'AWS Secret Key가 올바르지 않습니다'
     } else if (error.message?.includes('access denied')) {
       errorMessage = 'Bedrock 모델에 대한 액세스 권한이 없습니다. AWS 콘솔에서 모델 액세스를 활성화해주세요.'
+    } else if (error.message?.includes('ECONNREFUSED') || error.message?.includes('fetch')) {
+      errorMessage = 'MCP 서버에 연결할 수 없습니다. MCP 서버가 실행 중인지 확인해주세요.'
     } else if (error.message) {
       errorMessage = error.message
     }
@@ -63,36 +70,41 @@ export async function POST(request: NextRequest) {
       error: errorMessage,
       code: error.Code || error.name || 'UnknownError',
       fallback: getFallbackResponse(body.query),
-      info: 'Bedrock은 서버 환경변수로, MCP는 사용자 자격증명으로 분리되어 있습니다.'
+      info: '⚠️ MCP 연동 중 문제가 발생했습니다. MCP 서버(포트 3001) 상태를 확인해주세요.'
     }
     
     return NextResponse.json(errorResult, { status: 500 })
   }
 }
 
-// Bedrock 실패시 폴백 응답
+// MCP/Bedrock 실패시 폴백 응답
 function getFallbackResponse(query: string): string {
   const queryLower = query.toLowerCase()
   
   if (queryLower.includes('ec2') || queryLower.includes('인스턴스')) {
-    return `EC2 인스턴스 정보를 조회하려고 했지만 AI 에이전트에 문제가 발생했습니다. 
-AWS 자격증명과 Bedrock 환경변수를 확인해주세요.`
+    return `EC2 인스턴스 정보를 조회하려고 했지만 MCP 서버에 문제가 발생했습니다. 
+MCP 서버를 시작하려면: npm run mcp-server`
   }
   
   if (queryLower.includes('s3') || queryLower.includes('버킷')) {
-    return `S3 버킷 정보를 조회하려고 했지만 AI 에이전트에 문제가 발생했습니다. 
-AWS 자격증명과 Bedrock 환경변수를 확인해주세요.`
+    return `S3 버킷 정보를 조회하려고 했지만 MCP 서버에 문제가 발생했습니다. 
+MCP 서버를 시작하려면: npm run mcp-server`
   }
   
   if (queryLower.includes('계정') || queryLower.includes('account')) {
-    return `AWS 계정 정보를 조회하려고 했지만 AI 에이전트에 문제가 발생했습니다. 
-AWS 자격증명과 Bedrock 환경변수를 확인해주세요.`
+    return `AWS 계정 정보를 조회하려고 했지만 MCP 서버에 문제가 발생했습니다. 
+MCP 서버를 시작하려면: npm run mcp-server`
   }
   
-  return `AI 에이전트가 일시적으로 사용할 수 없습니다. 
-서버 환경설정(Bedrock)과 사용자 자격증명(MCP)을 확인해주세요.
+  return `실제 AWS MCP 서버와 연동된 AI 에이전트가 일시적으로 사용할 수 없습니다.
 
-사용 가능한 API:
-- /api/aws-test - MCP 자격증명 테스트
-- /api/verify-aws - AWS 자격증명 검증`
+🔧 해결 방법:
+1. MCP 서버 시작: npm run mcp-server
+2. 서버 환경변수 확인 (Bedrock 자격증명)
+3. 사용자 AWS 자격증명 확인
+
+📋 지원되는 질문:
+- "EC2 인스턴스 현황 보여줘"
+- "S3 버킷 목록 알려줘"  
+- "내 AWS 계정 정보 확인해줘"`
 }

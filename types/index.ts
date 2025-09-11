@@ -118,17 +118,6 @@ export interface APIResponse<T = any> {
   code?: string
 }
 
-export interface AWSTestResponse {
-  success: boolean
-  account?: string
-  arn?: string
-  userId?: string
-  region?: string
-  purpose?: string
-  error?: string
-  code?: string
-}
-
 export interface AWSQueryResponse {
   data: string
   fallback?: string

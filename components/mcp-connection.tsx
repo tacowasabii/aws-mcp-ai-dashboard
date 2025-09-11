@@ -18,22 +18,21 @@ export function MCPConnection() {
     setError(undefined)
     
     try {
-      const response = await fetch('/api/aws-test', {
+      const response = await fetch('/api/verify-aws', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          credentials: {
-            accessKeyId: activeAccount.accessKeyId,
-            secretAccessKey: activeAccount.secretAccessKey,
-            region: activeAccount.region
-          }
+          accessKeyId: activeAccount.accessKeyId,
+          secretAccessKey: activeAccount.secretAccessKey,
+          region: activeAccount.region
         })
       })
       
-      if (response.ok) {
+      const result = await response.json()
+      
+      if (result.success) {
         setStatus('connected')
       } else {
-        const result = await response.json()
         throw new Error(result.error || '연결 실패')
       }
     } catch (err) {

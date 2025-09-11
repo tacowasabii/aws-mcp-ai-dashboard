@@ -3,7 +3,11 @@ import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts'
 
 export async function POST(request: NextRequest) {
   try {
-    const { accessKeyId, secretAccessKey, region } = await request.json()
+    const body = await request.json()
+    
+    // 두 가지 형식 모두 지원 (기존 호환성 유지)
+    const credentials = body.credentials || body
+    const { accessKeyId, secretAccessKey, region } = credentials
     
     if (!accessKeyId || !secretAccessKey) {
       return NextResponse.json({ 
@@ -14,10 +18,7 @@ export async function POST(request: NextRequest) {
     
     const client = new STSClient({
       region: region || 'us-east-1',
-      credentials: {
-        accessKeyId,
-        secretAccessKey
-      }
+      credentials: { accessKeyId, secretAccessKey }
     })
     
     const command = new GetCallerIdentityCommand({})
@@ -25,7 +26,8 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({ 
       success: true, 
-      accountId: result.Account,
+      account: result.Account,
+      accountId: result.Account, // 호환성
       arn: result.Arn,
       userId: result.UserId,
       region: region || 'us-east-1'
@@ -46,7 +48,8 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({ 
       success: false, 
-      error: errorMessage 
+      error: errorMessage,
+      code: error.Code || error.name || 'UnknownError'
     }, { status: 400 })
   }
 }
