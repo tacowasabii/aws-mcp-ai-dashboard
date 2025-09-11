@@ -168,21 +168,24 @@ ${resultsText}
     try {
       console.log('🔍 AI 응답 파싱 중...')
       
-      // JSON 추출 시도
       let jsonStr = toolSelection.trim()
       
-      // ```json 블록 제거
-      if (jsonStr.includes('```json')) {
-        jsonStr = jsonStr.replace(/```json\\s*/g, '').replace(/```/g, '')
-      }
+      // 더 견고한 JSON 추출
+      // ```json...``` 블록에서 JSON 부분만 추출
+      const codeBlockRegex = /```(?:json)?\s*\n?([\s\S]*?)\n?```/g
+      const match = codeBlockRegex.exec(jsonStr)
       
-      // 기타 마크다운 제거
-      if (jsonStr.includes('```')) {
-        jsonStr = jsonStr.replace(/```[\\s\\S]*?```/g, '')
+      if (match) {
+        jsonStr = match[1].trim()
+        console.log('📋 코드 블록에서 JSON 추출 성공')
+      } else {
+        // 코드 블록이 없다면 JSON이 직접 반환된 것으로 가정
+        console.log('📋 직접 JSON 응답으로 처리')
       }
       
       console.log('📋 파싱할 JSON:', jsonStr)
       
+      // JSON 파싱 시도
       const parsed = JSON.parse(jsonStr)
       console.log('✅ JSON 파싱 성공:', parsed)
       
@@ -197,8 +200,50 @@ ${resultsText}
     } catch (error) {
       console.error('❌ 도구 선택 파싱 실패:', error)
       console.error('원본 응답:', toolSelection)
-      return []
+      
+      // 폴백: AI 응답을 분석해서 수동으로 도구 추론
+      console.log('🔄 폴백: 수동 도구 추론 시도...')
+      return this.fallbackToolSelection(toolSelection)
     }
+  }
+
+  private fallbackToolSelection(response: string): MCPToolCall[] {
+    const lowerResponse = response.toLowerCase()
+    
+    console.log('🤔 AI 응답 내용 분석 중...')
+    
+    // EC2 관련 키워드 체크
+    if (lowerResponse.includes('ec2') || lowerResponse.includes('instance') || lowerResponse.includes('인스턴스')) {
+      console.log('✅ EC2 관련 키워드 발견 - describe_ec2_instances 사용')
+      return [{
+        toolName: 'describe_ec2_instances',
+        parameters: {},
+        reason: 'EC2 관련 질문으로 판단됨'
+      }]
+    }
+    
+    // S3 관련 키워드 체크
+    if (lowerResponse.includes('s3') || lowerResponse.includes('bucket') || lowerResponse.includes('버킷')) {
+      console.log('✅ S3 관련 키워드 발견 - list_s3_buckets 사용')
+      return [{
+        toolName: 'list_s3_buckets',
+        parameters: {},
+        reason: 'S3 관련 질문으로 판단됨'
+      }]
+    }
+    
+    // 계정 정보 관련 키워드 체크
+    if (lowerResponse.includes('account') || lowerResponse.includes('계정') || lowerResponse.includes('identity')) {
+      console.log('✅ 계정 관련 키워드 발견 - get_account_info 사용')
+      return [{
+        toolName: 'get_account_info',
+        parameters: {},
+        reason: '계정 정보 질문으로 판단됨'
+      }]
+    }
+    
+    console.log('❌ 인식 가능한 키워드를 찾지 못함')
+    return []
   }
 
   private async executeTools(toolCalls: MCPToolCall[]): Promise<MCPToolResult[]> {
