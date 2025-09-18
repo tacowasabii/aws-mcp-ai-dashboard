@@ -88,8 +88,10 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=<Instruction>\nYour primary responsibility is to create actionable, risk-aware work plans based on user input.\nIdentify and summarize all potential risks, version-specific changes, breaking changes, and interruption possibilities.\nReference authoritative documentation (AWS official docs, Context7 MCP) for every step; always provide source links.\nUse a command-oriented, concise tone throughout.\nBegin with a Table of Contents.\nNumber and title each stage clearly.\nDefine all script variables at the top.\nEmphasize commands using Markdown (**bold**/`inline code`).\nPresent scripts sequentially, one at a time.\nOutput must be in English.\nEnd the document immediately after the final stage/script, with no closing remarks or conclusions.\nWhen modifications are required, preserve original content and only apply minimal necessary changes.\nAlways refer to official documentation when new technologies are proposed.\n</Instruction>\n<Agent>\nYou are an Agent dedicated to producing precise, risk-focused cloud work plans.\nFor every user request, analyze and document all relevant risks, version changes, and interruption factors.\nLeverage AWS Knowledge MCP and Context7 MCP to ensure all guidance is authoritative and up-to-date.\nYour output must be clear, actionable, and enable safe execution by humans.\nInclude copy-paste-ready variables, sequential scripts, and source links for every referenced document.\nIf any required input is missing, request it at the end.\n</Agent>\n{{ $json.body.query }}",
-        "options": {}
+        "text": "=<Instruction>\nYour primary responsibility is to create actionable, risk-aware work plans based on user input.\nIdentify and summarize all potential risks, version-specific changes, breaking changes, and interruption possibilities.\nReference authoritative documentation (AWS official docs, Context7 MCP) for every step; always provide source links.\nUse a command-oriented, concise tone throughout.\nBegin with a Table of Contents.\nNumber and title each stage clearly.\nDefine all script variables at the top.\nEmphasize commands using Markdown (**bold**/`inline code`).\nPresent scripts sequentially, one at a time.\nOutput must be in English.\nEnd the document immediately after the final stage/script, with no closing remarks or conclusions.\nWhen modifications are required, preserve original content and only apply minimal necessary changes.\nAlways refer to official documentation when new technologies are proposed.\n</Instruction>\n<Agent>\nYou are an Agent dedicated to producing precise, risk-focused cloud work plans.\nFor every user request, analyze and document all relevant risks, version changes, and interruption factors.\nLeverage AWS Knowledge MCP and Context7 MCP to ensure all guidance is authoritative and up-to-date.\nYour output must be clear, actionable, and enable safe execution by humans.\nInclude copy-paste-ready variables, sequential scripts, and source links for every referenced document.\nIf any required input is missing, request it at the end.\n</Agent>\n{{ $('Webhook').item.json.body.query }}",
+        "options": {
+          "maxIterations": 7
+        }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2.2,
@@ -108,8 +110,8 @@
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
       "position": [
-        200,
-        -408
+        192,
+        -400
       ],
       "id": "a9c77914-d99b-46cb-bb89-58f32ee47e8d",
       "name": "Simple Memory"
@@ -157,7 +159,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=에러가 발생한 명령어:\n{{ $json.output.error.original_command }}\n\n에러 메세지:\n{{ $json.output.error.error_code }}\n{{ $json.output.error.error_description }}\n\n에러를 해결한 명령어:\n{{ $json.output.error.fixed_command }}\n\n기존 작업 계획서:\n{{ $node[\"makeplan\"] }}",
+        "text": "=에러가 발생한 명령어 및 메세지:\n{{ $('Webhook').item.json.body.query }}",
         "options": {
           "systemMessage": "당신의 업무는 클라우드 리소스 작업 계획서를 수정하는 일입니다. 기존의 작업 계획서와 발생한 오류 명령어, 해결 방안을 보고 작업 계획서를 수정하세요. 수정할 때는 에러가 발생한 명령어만 수정하고 다른 내용은 절대 건들지 마세요. 답변은 수정된 작업 계획서 내용만 출력해주세요."
         }
@@ -174,7 +176,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ $json.body.query }}",
+        "text": "={{ $('Webhook').item.json.body.query }}",
         "hasOutputParser": true,
         "options": {
           "systemMessage": "=당신은 AWS CLI 명령어 오류를 해결하고, 오류 해결 정보를 구조화된 JSON 형태로 출력하는 AI 에이전트입니다.\n사용자가 입력한 AWS CLI 명령어와 에러 메시지를 기반으로 오류 원인을 분석하고, 해결을 위한 정확한 명령어를 제시하며, RAG에 사용할 수 있는 구조화된 데이터를 생성해야 합니다.\n사용자는 다음 두 가지를 입력합니다\n- CLI 명령어: original_command\n- 에러 메시지: error_description"
@@ -206,7 +208,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=<Instruction>\nCreate a work plan based on the user’s input.\nUse a formal, concise tone.\nMake it command-oriented; give brief explanations.\nOutput as a Markdown document, but never starts with \"```markdown\".\nInclude a Table of Contents at the top.\nStructure clear, numbered stages with headings.\nDefine all script variables at the very top.\nEmphasize commands with Markdown (**bold**/`inline code`); avoid the “A: b” style.\nEnsure variables and scripts are copy-paste ready.\nPresent scripts one at a time (sequential).\nFinal output language must be Korean.\nEnd the document without any closing remark; no conclusions or sign-offs. The document must end immediately after the final stage/script.\n</instruction>\n<Agent> An Agent that authors precise cloud change execution plans using AWS CLI and shell scripts. It leverages context7 for runtime context retrieval and aws knowledge mcp for authoritative AWS guidance. The plan must clearly convey intent and end-to-end flow so a human can execute safely and trace decisions. It outputs formal Markdown with copy-paste-ready variables and sequential scripts, requesting any missing inputs at the end. </Agent>\nUser: {{ $('WorkPlan').item.json.body.query }}\nDocs: {{ $json.output }}",
+        "text": "=<Instruction>\nCreate a work plan based on the user’s input.\nUse a formal, concise tone.\nMake it command-oriented; give brief explanations.\nOutput as a Markdown document, but never starts with \"```markdown\".\nInclude a Table of Contents at the top.\nStructure clear, numbered stages with headings.\nDefine all script variables at the very top.\nEmphasize commands with Markdown (**bold**/`inline code`); avoid the “A: b” style.\nEnsure variables and scripts are copy-paste ready.\nPresent scripts one at a time (sequential).\nFinal output language must be Korean.\nEnd the document without any closing remark; no conclusions or sign-offs. The document must end immediately after the final stage/script.\n</instruction>\n<Agent> An Agent that authors precise cloud change execution plans using AWS CLI and shell scripts. It leverages context7 for runtime context retrieval and aws knowledge mcp for authoritative AWS guidance. The plan must clearly convey intent and end-to-end flow so a human can execute safely and trace decisions. It outputs formal Markdown with copy-paste-ready variables and sequential scripts, requesting any missing inputs at the end. </Agent>\nUser: {{ $('Webhook').item.json.body.query }}\nDocs: {{ $json.output }}",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
@@ -281,7 +283,7 @@
           "conditions": [
             {
               "id": "7d95bb6b-7d9e-42b2-b394-e0d9126fae15",
-              "leftValue": 0,
+              "leftValue": "={{ $json.output.result }}",
               "rightValue": 1,
               "operator": {
                 "type": "number",
@@ -314,7 +316,7 @@
           "conditions": [
             {
               "id": "e1547262-8fff-4e54-9488-a0eaac3f78ad",
-              "leftValue": 0,
+              "leftValue": "={{ $json.output.result }}",
               "rightValue": 0,
               "operator": {
                 "type": "number",
@@ -347,7 +349,7 @@
           "conditions": [
             {
               "id": "78232f41-9185-457a-9eb2-1b4340784687",
-              "leftValue": 0,
+              "leftValue": "={{ $json.output.result }}",
               "rightValue": 2,
               "operator": {
                 "type": "number",
@@ -371,6 +373,7 @@
     {
       "parameters": {
         "promptType": "define",
+        "text": "={{ $('Webhook').item.json.body.query }}",
         "batching": {}
       },
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
@@ -496,13 +499,7 @@
     },
     "Simple Memory": {
       "ai_memory": [
-        [
-          {
-            "node": "makeplan",
-            "type": "ai_memory",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Azure OpenAI Chat Model2": {
@@ -539,13 +536,7 @@
     },
     "Simple Memory2": {
       "ai_memory": [
-        [
-          {
-            "node": "오류 해결",
-            "type": "ai_memory",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "makeplan": {
@@ -642,7 +633,13 @@
     },
     "Basic LLM Chain1": {
       "main": [
-        []
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Azure OpenAI Chat Model5": {
@@ -661,7 +658,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "02f00ab8-8305-4b1f-b5c8-99fac179c62a",
+  "versionId": "67bf0abc-2c50-44a1-9d17-9b61999979f0",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "ac20f92d18975045f55b1eb3a8bbd146a0c6ebd3fc31e377273aedc939f6b93b"
