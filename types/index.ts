@@ -5,6 +5,16 @@ export interface AWSCredentials {
   region?: string
 }
 
+// LLM + MCP 통합 타입들
+export interface LLMAWSResponse {
+  success: boolean
+  answer?: string
+  data?: any
+  mcpUsed?: boolean
+  reasoning?: string
+  error?: string
+}
+
 export interface AWSAccount {
   id: string
   name: string
@@ -143,14 +153,17 @@ export type MessageType = 'user' | 'ai' | 'system' | 'error'
 
 export type LoadingState = 'idle' | 'loading' | 'success' | 'error'
 
-// 환경변수 타입
+// 환경변수 타입 (LLM + MCP 통합)
 export interface EnvConfig {
-  BEDROCK_ACCESS_KEY_ID?: string
-  BEDROCK_SECRET_ACCESS_KEY?: string
-  BEDROCK_REGION?: string
-  BEDROCK_MODEL_ID?: string
-  MCP_SERVER_URL?: string
-  MCP_FALLBACK_MODE?: string
+  // LLM API 키 (OpenAI 또는 Anthropic)
+  OPENAI_API_KEY?: string
+  ANTHROPIC_API_KEY?: string
+
+  // AWS MCP 서버 설정
+  AWS_MCP_SERVER_URL?: string
+  AWS_MCP_TIMEOUT?: string
+
+  // 기타 설정
   NODE_ENV?: string
   NEXT_PUBLIC_APP_URL?: string
 }

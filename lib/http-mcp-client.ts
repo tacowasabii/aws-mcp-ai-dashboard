@@ -67,7 +67,7 @@ export class HTTPMCPClient {
         result: data.result,
         toolName: name
       }
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         error: error.message,
@@ -99,7 +99,7 @@ export class HTTPMCPClient {
         result: data.analysis,
         toolName: 'prompt_understanding'
       }
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         error: error.message,

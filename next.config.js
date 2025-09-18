@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ['@aws-sdk/client-sts']
-  }
+  // No external packages needed since we removed AWS SDK
 }
 
 module.exports = nextConfig

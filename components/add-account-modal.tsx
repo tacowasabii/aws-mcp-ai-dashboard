@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useAppStore } from '@/lib/stores'
 import { AWSAccount } from '@/types'
+import { MCPAWSCredentials } from '@/lib/mcp-credential-manager'
 import { X, Loader2 } from 'lucide-react'
 
 interface AddAccountModalProps {
@@ -28,7 +29,7 @@ export function AddAccountModal({ isOpen, onClose }: AddAccountModalProps) {
     setError('')
     
     try {
-      // AWS 계정 검증
+      // LLM + MCP를 통한 AWS 계정 검증
       const response = await fetch('/api/verify-aws', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -51,7 +52,7 @@ export function AddAccountModal({ isOpen, onClose }: AddAccountModalProps) {
         onClose()
         setFormData({ name: '', region: 'us-east-1', accessKeyId: '', secretAccessKey: '' })
       } else {
-        setError(result.error || 'AWS 계정 검증에 실패했습니다')
+        setError(result.error || 'LLM + MCP를 통한 AWS 계정 검증에 실패했습니다')
       }
     } catch (error) {
       setError('연결 중 오류가 발생했습니다')

@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { AWSBedrockAgentWithMCP } from '../../../lib/bedrock-agent-with-mcp'
-import { AWSCredentials, AWSQueryResponse } from '../../../types'
+import { pureMCPClient } from '../../../lib/pure-mcp-client'
+import { MCPAWSCredentials } from '../../../lib/mcp-credential-manager'
+import { AWSQueryResponse } from '../../../types'
 
 export async function POST(request: NextRequest) {
+  let body: any = {}
   try {
-    const body = await request.json()
-    const { query, credentials }: { query: string, credentials: AWSCredentials } = body
+    body = await request.json()
+    const { query, credentials }: { query: string, credentials: MCPAWSCredentials } = body
     
     // MCP용 자격증명 검증
     if (!credentials?.accessKeyId || !credentials?.secretAccessKey) {
@@ -22,32 +24,29 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('🚀 실제 AWS MCP와 연동된 AI 에이전트 시작...')
+    console.log('🚀 Pure LLM + AWS MCP 시스템 시작...')
 
-    // 실제 MCP를 사용하는 Bedrock Agent 초기화
-    const agent = new AWSBedrockAgentWithMCP({
-      accessKeyId: credentials.accessKeyId,
-      secretAccessKey: credentials.secretAccessKey,
-      region: credentials.region || 'us-east-1'
-    })
-
-    // AI가 AWS MCP + 직접 AWS API를 통해 지능적 응답 생성
-    const response = await agent.processUserQuery(query)
+    // Pure MCP 클라이언트로 LLM + MCP 통합 쿼리 처리
+    const response = await pureMCPClient.queryAWSResources(credentials, query)
     
-    const result: AWSQueryResponse = { 
-      data: response,
-      info: '✅ 실제 AWS MCP 서버와 연동되어 처리되었습니다'
+    if (response.success) {
+      const result: AWSQueryResponse = {
+        data: response.answer || response.data,
+        info: '✅ LLM + AWS MCP 시스템을 통해 처리되었습니다'
+      }
+      return NextResponse.json(result)
+    } else {
+      throw new Error(response.error || 'LLM + MCP 처리 실패')
     }
-    return NextResponse.json(result)
-    
-  } catch (error) {
-    console.error('❌ AWS MCP Bedrock Agent 실패:', error)
-    
-    let errorMessage = 'AI 에이전트 처리 실패'
-    
-    // Bedrock 환경변수 오류
-    if (error.message?.includes('Bedrock 자격증명이 환경변수에 설정되지 않았습니다')) {
-      errorMessage = 'Bedrock 자격증명이 서버에 설정되지 않았습니다. 관리자에게 문의하세요.'
+
+  } catch (error: any) {
+    console.error('❌ LLM + AWS MCP 시스템 실패:', error)
+
+    let errorMessage = 'LLM + MCP 시스템 처리 실패'
+
+    // LLM API 환경변수 오류
+    if (error.message?.includes('LLM API 키가 설정되지 않았습니다')) {
+      errorMessage = 'LLM API 키가 서버에 설정되지 않았습니다. 관리자에게 문의하세요.'
     }
     // MCP 자격증명 오류
     else if (error.name === 'CredentialsProviderError') {
@@ -59,7 +58,7 @@ export async function POST(request: NextRequest) {
     } else if (error.message?.includes('SignatureDoesNotMatch')) {
       errorMessage = 'AWS Secret Key가 올바르지 않습니다'
     } else if (error.message?.includes('access denied')) {
-      errorMessage = 'Bedrock 모델에 대한 액세스 권한이 없습니다. AWS 콘솔에서 모델 액세스를 활성화해주세요.'
+      errorMessage = 'AWS 리소스에 대한 액세스 권한이 없습니다. IAM 권한을 확인해주세요.'
     } else if (error.message?.includes('ECONNREFUSED') || error.message?.includes('fetch')) {
       errorMessage = 'MCP 서버에 연결할 수 없습니다. MCP 서버가 실행 중인지 확인해주세요.'
     } else if (error.message) {
@@ -67,44 +66,44 @@ export async function POST(request: NextRequest) {
     }
     
     const errorResult: AWSQueryResponse = {
+      data: errorMessage, // AWSQueryResponse requires data field
       error: errorMessage,
       code: error.Code || error.name || 'UnknownError',
       fallback: getFallbackResponse(body.query),
-      info: '⚠️ MCP 연동 중 문제가 발생했습니다. MCP 서버(포트 3001) 상태를 확인해주세요.'
+      info: '⚠️ LLM + MCP 연동 중 문제가 발생했습니다. 시스템 상태를 확인해주세요.'
     }
     
     return NextResponse.json(errorResult, { status: 500 })
   }
 }
 
-// MCP/Bedrock 실패시 폴백 응답
+// LLM + MCP 실패시 폴백 응답
 function getFallbackResponse(query: string): string {
   const queryLower = query.toLowerCase()
-  
+
   if (queryLower.includes('ec2') || queryLower.includes('인스턴스')) {
-    return `EC2 인스턴스 정보를 조회하려고 했지만 MCP 서버에 문제가 발생했습니다. 
-MCP 서버를 시작하려면: npm run mcp-server`
+    return `EC2 인스턴스 정보를 조회하려고 했지만 LLM + MCP 시스템에 문제가 발생했습니다.`
   }
-  
+
   if (queryLower.includes('s3') || queryLower.includes('버킷')) {
-    return `S3 버킷 정보를 조회하려고 했지만 MCP 서버에 문제가 발생했습니다. 
-MCP 서버를 시작하려면: npm run mcp-server`
+    return `S3 버킷 정보를 조회하려고 했지만 LLM + MCP 시스템에 문제가 발생했습니다.`
   }
-  
+
   if (queryLower.includes('계정') || queryLower.includes('account')) {
-    return `AWS 계정 정보를 조회하려고 했지만 MCP 서버에 문제가 발생했습니다. 
-MCP 서버를 시작하려면: npm run mcp-server`
+    return `AWS 계정 정보를 조회하려고 했지만 LLM + MCP 시스템에 문제가 발생했습니다.`
   }
-  
-  return `실제 AWS MCP 서버와 연동된 AI 에이전트가 일시적으로 사용할 수 없습니다.
+
+  return `LLM + AWS MCP 통합 시스템이 일시적으로 사용할 수 없습니다.
 
 🔧 해결 방법:
-1. MCP 서버 시작: npm run mcp-server
-2. 서버 환경변수 확인 (Bedrock 자격증명)
+1. LLM API 키 환경변수 확인 (OPENAI_API_KEY 또는 ANTHROPIC_API_KEY)
+2. AWS MCP 서버 상태 확인
 3. 사용자 AWS 자격증명 확인
 
 📋 지원되는 질문:
 - "EC2 인스턴스 현황 보여줘"
-- "S3 버킷 목록 알려줘"  
-- "내 AWS 계정 정보 확인해줘"`
+- "S3 버킷 목록 알려줘"
+- "내 AWS 계정 정보 확인해줘"
+- "비용 분석해줘"
+- "보안 상태 확인해줘"`
 }

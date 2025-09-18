@@ -34,7 +34,7 @@ export function MCPChat() {
     })
     
     try {
-      // AWS API를 직접 호출하여 실제 데이터 조회
+      // LLM + AWS MCP 시스템을 통한 자연어 쿼리 처리
       const response = await fetch('/api/aws-query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -92,7 +92,7 @@ export function MCPChat() {
       {/* 상태 표시 */}
       <div className="text-xs text-gray-500 border-b pb-2 mb-4">
         <div className="flex justify-between items-center">
-          <span>🔗 AWS API</span>
+          <span>🤖 LLM + AWS MCP</span>
           <span>{activeAccount.region}</span>
         </div>
       </div>
@@ -137,8 +137,8 @@ export function MCPChat() {
           {accountMessages.length === 0 && (
             <div className="text-center py-12 text-gray-500">
               <Bot size={32} className="mx-auto mb-4 text-gray-400" />
-              <p className="text-lg mb-2">AWS 리소스 조회</p>
-              <p className="text-sm text-gray-400">"EC2 인스턴스", "S3 버킷", "계정 정보" 등을 물어보세요</p>
+              <p className="text-lg mb-2">LLM + AWS MCP 시스템</p>
+              <p className="text-sm text-gray-400">자연어로 AWS 리소스에 대해 질문하세요. 예: "EC2 인스턴스 현황은?", "S3 버킷 분석해줘"</p>
             </div>
           )}
           
@@ -153,7 +153,7 @@ export function MCPChat() {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="AWS 리소스에 대해 질문하세요..."
+          placeholder="자연어로 AWS 리소스에 대해 질문하세요..."
           className="flex-1 border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           disabled={isLoading}
         />

@@ -5,10 +5,10 @@ export default function HomePage() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="text-center">
         <h1 className="text-4xl font-bold text-gray-900 mb-8">
-          AWS MCP AI Dashboard
+          LLM + AWS MCP Dashboard
         </h1>
         <p className="text-xl text-gray-600 mb-8">
-          AWS 다중 계정과 MCP를 연동한 AI 질의응답 서비스
+          LLM과 AWS MCP를 통한 순수 자연어 AWS 관리 시스템
         </p>
         <Link 
           href="/dashboard"
