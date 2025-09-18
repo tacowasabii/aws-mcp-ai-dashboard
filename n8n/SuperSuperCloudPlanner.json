@@ -25,7 +25,7 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
       "typeVersion": 1,
       "position": [
-        280,
+        288,
         224
       ],
       "id": "2fc94591-875f-4cf8-a384-bacf6ae26b9d",
@@ -47,7 +47,7 @@
       "typeVersion": 3.2,
       "position": [
         912,
-        148
+        160
       ],
       "id": "7e5c3767-d813-4c17-8a2a-ca74e511bff6",
       "name": "Merge"
@@ -78,13 +78,13 @@
     {
       "parameters": {
         "schemaType": "manual",
-        "inputSchema": "={\n  \"type\":\"object\",\n  \"properties\":{\n    \"output\":{\n      \"type\":\"object\",\n      \"properties\":{\n        \"error\":{\n          \"type\":\"object\",\n            \"properties\":{\n              \"error_code\":{\"type\":\"string\"},\n              \"error_description\":{\"type\":\"string\"},\n              \"original_command\":{\"type\":\"string\"},\n              \"fixed_command\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\n              \"explanation\":{\"type\":\"string\"},\n              \"related_documentation\":{\n                \"type\":\"array\",\n                \"items\":{\"type\":\"string\"}\n              }\n            }\n        },\n        \"plan\":{\"type\":\"string\"}\n      }\n    }\n  }\n}"
+        "inputSchema": "={\n  \"type\":\"object\",\n  \"properties\":{\n\n        \"error\":{\n          \"type\":\"object\",\n            \"properties\":{\n              \"error_code\":{\"type\":\"string\"},\n              \"error_description\":{\"type\":\"string\"},\n              \"original_command\":{\"type\":\"string\"},\n              \"fixed_command\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\n              \"explanation\":{\"type\":\"string\"},\n              \"related_documentation\":{\n                \"type\":\"array\",\n                \"items\":{\"type\":\"string\"}\n              }\n            }\n        }\n\n  }\n}"
       },
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
         0,
-        668
+        672
       ],
       "id": "a89a3625-f8ef-4154-b36f-d36bb7064578",
       "name": "Structured Output Parser"
@@ -98,7 +98,7 @@
       "typeVersion": 1,
       "position": [
         -544,
-        668
+        672
       ],
       "id": "4d41380f-ad16-41c3-840e-94616f1a770d",
       "name": "Azure OpenAI Chat Model",
@@ -118,7 +118,7 @@
       "typeVersion": 1,
       "position": [
         -336,
-        1276
+        1280
       ],
       "id": "96bc3cdc-8b14-4cf2-b1b9-55968c9a547c",
       "name": "Azure OpenAI Chat Model1",
@@ -139,7 +139,7 @@
       "typeVersion": 1.1,
       "position": [
         -272,
-        268
+        272
       ],
       "id": "330b7f87-353a-42a3-87cf-bc44985e3223",
       "name": "AWSDOC"
@@ -154,7 +154,7 @@
       "typeVersion": 1.1,
       "position": [
         -144,
-        268
+        272
       ],
       "id": "2ded9374-32a0-4ced-b2f6-c63f8f8116e3",
       "name": "Context7MCP"
@@ -170,8 +170,8 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2.2,
       "position": [
-        -344,
-        44
+        -352,
+        48
       ],
       "id": "f5c523c2-fbed-474d-8fec-714d813d0459",
       "name": "문서 조회"
@@ -184,8 +184,8 @@
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
       "position": [
-        696,
-        552
+        128,
+        912
       ],
       "id": "0ed5e865-7af7-4886-8b3e-57f84758e922",
       "name": "Simple Memory"
@@ -198,8 +198,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
       "typeVersion": 1,
       "position": [
-        568,
-        552
+        576,
+        560
       ],
       "id": "a79a5600-15be-4e36-8ad2-5ef748da5daf",
       "name": "Azure OpenAI Chat Model2",
@@ -219,7 +219,7 @@
       "typeVersion": 1,
       "position": [
         -400,
-        268
+        272
       ],
       "id": "9a5484e4-edd0-4555-9663-ddd7b68b60ce",
       "name": "Azure OpenAI Chat Model3",
@@ -233,7 +233,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=에러가 발생한 명령어 및 메세지:\n{{ $('Webhook').item.json.body.query }}",
+        "text": "={{ $('Webhook').item.json.body.query }}\n\n",
         "options": {
           "systemMessage": "당신의 업무는 클라우드 리소스 작업 계획서를 수정하는 일입니다. 기존의 작업 계획서와 발생한 오류 명령어, 해결 방안을 보고 작업 계획서를 수정하세요. 수정할 때는 에러가 발생한 명령어만 수정하고 다른 내용은 절대 건들지 마세요. 답변은 수정된 작업 계획서 내용만 출력해주세요.\n참고할 기존 작업 계획서가 없다면 작업 계획서를 먼저 만들어달라고 유저에게 요청하세요."
         }
@@ -241,8 +241,8 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2.2,
       "position": [
-        -344,
-        1052
+        -352,
+        1056
       ],
       "id": "61ffcde8-92a0-4d62-a69a-736bda77e9f3",
       "name": "계획서 수정"
@@ -253,31 +253,17 @@
         "text": "={{ $('Webhook').item.json.body.query }}",
         "hasOutputParser": true,
         "options": {
-          "systemMessage": "=당신은 AWS CLI 명령어 오류를 해결하고, 오류 해결 정보를 구조화된 JSON 형태로 출력하는 AI 에이전트입니다.\n사용자가 입력한 AWS CLI 명령어와 에러 메시지를 기반으로 오류 원인을 분석하고, 해결을 위한 정확한 명령어를 제시하며, RAG에 사용할 수 있는 구조화된 데이터를 생성해야 합니다.\n사용자는 다음 두 가지를 입력합니다\n- CLI 명령어: original_command\n- 에러 메시지: error_description"
+          "systemMessage": "=당신은 AWS CLI 명령어 오류를 해결하고, 오류 해결 정보를 구조화된 JSON 형태로 출력하는 AI 에이전트입니다.\n사용자가 입력한 AWS CLI 명령어와 에러 메시지를 기반으로 오류 원인을 분석하고, 해결을 위한 정확한 명령어를 제시하며, RAG에 사용할 수 있는 구조화된 데이터를 생성해야 합니다.\n사용자는 다음 두 가지를 입력합니다\n- CLI 명령어: original_command\n- 에러 메시지: error_description\n명령어를 제외하고 한국어로 출력해주세요.\n\n에러를 해결하기 위해 먼저 데이터베이스를 확인하여 기존에 해결한 에러인지 체크하세요."
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2.2,
       "position": [
         -384,
-        444
+        448
       ],
       "id": "edfddd1b-8b20-4f9d-8180-a36e65b1bb9c",
       "name": "오류 해결"
-    },
-    {
-      "parameters": {
-        "sessionIdType": "customKey",
-        "sessionKey": "={{ $('Webhook').item.json.body.sessionId }}"
-      },
-      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
-      "typeVersion": 1.3,
-      "position": [
-        -416,
-        668
-      ],
-      "id": "16ef391c-db78-4f8c-be7b-3d5e47880de8",
-      "name": "Simple Memory2"
     },
     {
       "parameters": {
@@ -289,7 +275,7 @@
       "typeVersion": 2.2,
       "position": [
         560,
-        328
+        336
       ],
       "id": "4a8902b8-4d5b-47e6-9a18-bc100a8c9a83",
       "name": "makeplan"
@@ -305,7 +291,7 @@
       "typeVersion": 2.1,
       "position": [
         -1568,
-        852
+        864
       ],
       "id": "6d4a8ccb-7f88-41c1-86e2-576290bb8ed7",
       "name": "Webhook",
@@ -319,8 +305,8 @@
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
-        -1208,
-        1076
+        -1216,
+        1088
       ],
       "id": "46af5b6f-3d9b-467a-856a-c2267eb34b75",
       "name": "Structured Output Parser1"
@@ -333,8 +319,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
       "typeVersion": 1,
       "position": [
-        -1336,
-        1076
+        -1344,
+        1088
       ],
       "id": "d21a9b49-bc29-4bde-be4a-3069d766569e",
       "name": "Azure OpenAI Chat Model4",
@@ -373,7 +359,7 @@
       "typeVersion": 2.2,
       "position": [
         -992,
-        852
+        864
       ],
       "id": "61e6864e-7b19-484a-90c1-0412a40c0233",
       "name": "If"
@@ -439,7 +425,7 @@
       "typeVersion": 2.2,
       "position": [
         -768,
-        1356
+        1360
       ],
       "id": "71c9f35d-7030-4e6d-864f-d1c00f179f95",
       "name": "If2"
@@ -454,8 +440,8 @@
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.7,
       "position": [
-        -344,
-        1556
+        -352,
+        1568
       ],
       "id": "ac9694e0-0546-4e64-ac8a-d32c3f57679d",
       "name": "Basic LLM Chain"
@@ -478,7 +464,7 @@
       "typeVersion": 1.7,
       "position": [
         -1344,
-        852
+        864
       ],
       "id": "5cd07d23-98f7-4683-bc4f-61d1e8844f61",
       "name": "Basic LLM Chain1"
@@ -492,7 +478,7 @@
       "typeVersion": 1,
       "position": [
         -336,
-        1780
+        1792
       ],
       "id": "82fd1223-6317-4dad-afe2-1cd50e830584",
       "name": "Azure OpenAI Chat Model5",
@@ -502,20 +488,6 @@
           "name": "Azure Open AI account"
         }
       }
-    },
-    {
-      "parameters": {
-        "sessionIdType": "customKey",
-        "sessionKey": "={{ $('Webhook').item.json.body.sessionId }}"
-      },
-      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
-      "typeVersion": 1.3,
-      "position": [
-        -208,
-        1276
-      ],
-      "id": "02c236ea-17f5-483c-9923-56814b908add",
-      "name": "Simple Memory1"
     },
     {
       "parameters": {
@@ -533,7 +505,7 @@
       "typeVersion": 1.3,
       "position": [
         -288,
-        668
+        672
       ],
       "id": "89227bb2-e4ba-4008-b963-75a9a3c84ceb",
       "name": "Supabase Vector Store",
@@ -553,7 +525,7 @@
       "typeVersion": 1,
       "position": [
         -208,
-        876
+        880
       ],
       "id": "14dbdef8-d14b-4e23-ad5b-0fee24e9821f",
       "name": "Embeddings Azure OpenAI",
@@ -572,7 +544,7 @@
       "typeVersion": 1.3,
       "position": [
         -208,
-        1780
+        1792
       ],
       "id": "4f97e2b1-e60f-4cce-bb36-4d529f763f14",
       "name": "Structured Output Parser2"
@@ -580,17 +552,94 @@
     {
       "parameters": {
         "mode": "raw",
-        "jsonOutput": "={\n  \"output\": {{$json.body.output.explanation}},\n}\n",
+        "jsonOutput": "={\n  \"output\": \"{{$json.output.error.explanation}}\"\n}\n",
         "options": {}
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
         480,
-        652
+        656
       ],
       "id": "b118d747-f9bf-468f-9075-6e23be124ffe",
       "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "content": "## EKS 버전 1.28에서 1.30으로 업그레이드 하는 작업계획서 작성해줘\n\n## $aws eks describe-cluster --name production-eks-cluster --region ap-northeast-2\n## An error occurred (InvalidAccessKeyId) when calling the PutObject operation: The AWS Access Key Id you provided does not exist in our records.\n\n## 에러를 해결한 명령어를 적용해서 작업계획서를 수정해줘\n\n",
+        "height": 592,
+        "width": 880
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        144,
+        1024
+      ],
+      "id": "6a1bbaca-3ae4-475f-bdcf-e5fcab55b561",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "tableId": "prompthon",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "error_code",
+              "fieldValue": "={{ $('오류 해결').item.json.output.error.error_code }}"
+            },
+            {
+              "fieldId": "error_description",
+              "fieldValue": "={{ $('오류 해결').item.json.output.error.error_description }}"
+            },
+            {
+              "fieldId": "original_command",
+              "fieldValue": "={{ $('오류 해결').item.json.output.error.original_command }}"
+            },
+            {
+              "fieldId": "fixed_command",
+              "fieldValue": "={{ $('오류 해결').item.json.output.error.fixed_command }}"
+            },
+            {
+              "fieldId": "explanation",
+              "fieldValue": "={{ $('오류 해결').item.json.output.error.explanation }}"
+            },
+            {
+              "fieldId": "related_documentation",
+              "fieldValue": "={{ $('오류 해결').item.json.output.error.related_documentation }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        688,
+        656
+      ],
+      "id": "db89c6ac-86ec-47f6-9f6c-b525844c360b",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "fAfiYEC4M4E6nZb4",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Supabase Credential 설정법\n## Host : https://ckolilumwmotfjajnwqb.supabase.co\n## API Key : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrb2xpbHVtd21vdGZqYWpud3FiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODIwNzE2NywiZXhwIjoyMDczNzgzMTY3fQ.WbFsiDbN50dYnyu9H_66CIVHcJl6WGQ8AeAGwOkIdBI\n\n\n\n8시에 돌아올게요",
+        "height": 432,
+        "width": 752
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        960,
+        512
+      ],
+      "id": "5ea92c68-c5a8-4409-b6cc-c826419f3ab3",
+      "name": "Sticky Note1"
     }
   ],
   "pinData": {},
@@ -706,6 +755,11 @@
             "node": "makeplan",
             "type": "ai_memory",
             "index": 0
+          },
+          {
+            "node": "계획서 수정",
+            "type": "ai_memory",
+            "index": 0
           }
         ]
       ]
@@ -727,17 +781,6 @@
           {
             "node": "문서 조회",
             "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Simple Memory2": {
-      "ai_memory": [
-        [
-          {
-            "node": "오류 해결",
-            "type": "ai_memory",
             "index": 0
           }
         ]
@@ -852,26 +895,9 @@
         ]
       ]
     },
-    "Simple Memory1": {
-      "ai_memory": [
-        [
-          {
-            "node": "계획서 수정",
-            "type": "ai_memory",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Supabase Vector Store": {
       "ai_tool": [
-        [
-          {
-            "node": "오류 해결",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Embeddings Azure OpenAI": {
@@ -917,13 +943,24 @@
           }
         ]
       ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "4e8aef84-308e-4872-8ff9-deeabb3d3e83",
+  "versionId": "3accabef-705e-4e79-bda6-001070441d71",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "ac20f92d18975045f55b1eb3a8bbd146a0c6ebd3fc31e377273aedc939f6b93b"
