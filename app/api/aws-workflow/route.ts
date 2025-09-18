@@ -126,9 +126,7 @@ export async function POST(request: NextRequest) {
         // n8n 웹훅으로 일반 쿼리 처리 요청
         const webhookUrl =
           "http://localhost:5678/webhook/3c7a53f9-689e-4c4f-8cde-7cc487189bb4";
-        const sessionId =
-          Math.random().toString(36).substring(2, 15) +
-          Math.random().toString(36).substring(2, 15);
+        const sessionId = "default-session";
         const webhookPayload = {
           query: query,
           sessionId,
