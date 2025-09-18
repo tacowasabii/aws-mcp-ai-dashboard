@@ -38,6 +38,7 @@ interface AppState {
   // 터미널 상태
   isTerminalOpen: boolean
   isTerminalMinimized: boolean
+  terminalHeight: number
 
   // 액션들
   addAccount: (account: AWSAccount) => void
@@ -58,6 +59,7 @@ interface AppState {
   // 터미널 액션들
   setTerminalOpen: (open: boolean) => void
   setTerminalMinimized: (minimized: boolean) => void
+  setTerminalHeight: (height: number) => void
 
 }
 
@@ -74,6 +76,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   // 터미널 초기 상태
   isTerminalOpen: false,
   isTerminalMinimized: false,
+  terminalHeight: 384, // 기본 높이 24rem
   
   addAccount: (account) => 
     set((state) => {
@@ -155,6 +158,9 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setTerminalMinimized: (minimized) =>
     set({ isTerminalMinimized: minimized }),
+
+  setTerminalHeight: (height) =>
+    set({ terminalHeight: Math.max(200, Math.min(800, height)) }), // 최소 200px, 최대 800px
 }))
 
 // 편의 함수들
