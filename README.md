@@ -1,10 +1,10 @@
-# AWS MCP AI Dashboard
+# AWS AI Dashboard
 
-**Bedrock LLM + AWS MCP + LangChain Integration**: 토큰 효율적인 멀티턴 대화로 AWS 리소스를 자연어로 관리하는 지능형 대시보드
+**Bedrock LLM + AWS SDK + LangChain Integration**: 토큰 효율적인 멀티턴 대화로 AWS 리소스를 자연어로 관리하는 지능형 대시보드
 
 ## 🚀 주요 기능
 
-- 🤖 **Bedrock LLM + AWS MCP 통합**: AWS Bedrock Claude + AWS MCP를 통한 실시간 AWS 관리
+- 🤖 **Bedrock LLM + AWS SDK 통합**: AWS Bedrock Claude + AWS SDK를 통한 실시간 AWS 관리
 - 🧠 **토큰 효율적 멀티턴 대화**: LangChain 메모리로 긴 대화에서도 토큰 80-90% 절약
 - 💬 **지능형 대화 컨텍스트**: 계정별 독립적인 대화 세션과 AWS 리소스 맥락 유지
 - 🔐 **사용자 자격증명**: 사용자가 직접 입력하는 AWS 자격증명으로 안전한 운영
@@ -20,7 +20,7 @@
 
 ### 새로운 (토큰 효율적 멀티턴)
 ```
-사용자 질문 → LangChain Memory → Bedrock LLM → AWS MCP → AWS API → 컨텍스트 압축 → 지능적 응답
+사용자 질문 → LangChain Memory → Bedrock LLM → AWS SDK → AWS API → 컨텍스트 압축 → 지능적 응답
 ```
 
 ## 🧠 멀티턴 대화 시스템
@@ -51,7 +51,7 @@ interface ConversationContext {
 1. **Frontend**: React/Next.js + Zustand 상태관리
 2. **LLM Layer**: AWS Bedrock Claude (ChatBedrockConverse)
 3. **Memory Layer**: LangChain ConversationSummaryBufferMemory
-4. **AWS Integration**: AWS MCP + AWS SDK
+4. **AWS Integration**: AWS SDK
 5. **Context Management**: 계정별 대화 세션 및 컨텍스트 압축
 
 ## 📋 설치 및 설정
@@ -175,7 +175,7 @@ npm run dev
 - **Frontend**: Next.js 15, React 18, TypeScript
 - **LLM**: AWS Bedrock Claude (ChatBedrockConverse)
 - **Memory**: LangChain ConversationSummaryBufferMemory
-- **AWS Integration**: AWS SDK + AWS MCP
+- **AWS Integration**: AWS SDK
 - **State Management**: Zustand with conversation sessions
 - **Styling**: Tailwind CSS
 - **Memory Persistence**: 계정별 대화 세션 관리
@@ -293,4 +293,4 @@ MIT License
 
 **🎉 토큰 효율적인 멀티턴 AWS 대화의 미래를 경험해보세요!**
 
-*LangChain Memory + Bedrock LLM + AWS MCP = Smart Conversations ✨*
+*LangChain Memory + Bedrock LLM + AWS SDK = Smart Conversations ✨*
