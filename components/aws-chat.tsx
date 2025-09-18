@@ -239,7 +239,7 @@ export function AWSChat() {
 
                   <div className="flex flex-col gap-2">
                     <div
-                      className={`max-w-md px-4 py-3 rounded-lg text-sm whitespace-pre-line ${
+                      className={`max-w-md px-4 py-3 rounded-lg text-sm whitespace-pre-line break-words ${
                         message.type === "user"
                           ? "bg-blue-600 text-white"
                           : "bg-white text-gray-800 shadow-sm border"
