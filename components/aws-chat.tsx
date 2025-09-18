@@ -66,8 +66,8 @@ export function AWSChat() {
     setInput("");
 
     try {
-      // LLM + AWS MCP 시스템을 통한 자연어 쿼리 처리
-      const response = await fetch("/api/aws-query", {
+      // 통합 AWS 워크플로우를 통한 자연어 쿼리 처리
+      const response = await fetch("/api/aws-workflow", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -2,11 +2,6 @@ import {
   BedrockRuntimeClient,
   InvokeModelCommand,
 } from "@aws-sdk/client-bedrock-runtime";
-import {
-  AzureAgentClient,
-  WorkPlanRequest,
-  getAzureAgentConfig,
-} from "./azure-agent-client";
 
 export interface BedrockLLMConfig {
   region: string;
@@ -25,7 +20,6 @@ export interface LLMResponse {
 export class BedrockLLMClient {
   private client: BedrockRuntimeClient;
   private modelId: string;
-  private azureAgent: AzureAgentClient | null = null;
 
   constructor(config: BedrockLLMConfig) {
     this.client = new BedrockRuntimeClient({
@@ -36,125 +30,17 @@ export class BedrockLLMClient {
       },
     });
     this.modelId = config.modelId;
-
-    // Azure Agent 초기화
-    const azureConfig = getAzureAgentConfig();
-    if (azureConfig) {
-      this.azureAgent = new AzureAgentClient(azureConfig);
-    }
   }
 
-  /**
-   * 사용자 쿼리에서 작업계획서 생성 의도 파악
-   */
-  private detectWorkPlanIntent(query: string): boolean {
-    const workPlanKeywords = [
-      "작업계획서",
-      "워크플로우",
-      "계획서",
-      "작업 계획",
-      "workflow",
-      "work plan",
-      "단계별",
-      "절차",
-      "스크립트",
-    ];
-
-    const queryLower = query.toLowerCase();
-    return workPlanKeywords.some((keyword) =>
-      queryLower.includes(keyword.toLowerCase())
-    );
-  }
 
   /**
-   * 리소스 타입 추출
-   */
-  private extractResourceType(
-    query: string,
-    awsData?: any
-  ): "ec2" | "eks" | "vpc" | "general" {
-    const queryLower = query.toLowerCase();
-
-    if (
-      (queryLower.includes("ec2") ||
-        queryLower.includes("인스턴스") ||
-        queryLower.includes("서버")) &&
-      awsData
-    ) {
-      return "ec2";
-    }
-    if (
-      (queryLower.includes("eks") ||
-        queryLower.includes("클러스터") ||
-        queryLower.includes("쿠버네티스")) &&
-      awsData
-    ) {
-      return "eks";
-    }
-    if (
-      (queryLower.includes("vpc") ||
-        queryLower.includes("네트워크") ||
-        queryLower.includes("서브넷")) &&
-      awsData
-    ) {
-      return "vpc";
-    }
-
-    return "general";
-  }
-
-  /**
-   * AWS 전문가로서 질문에 답변 (실제 AWS 데이터 포함) + 작업계획서 생성
+   * AWS 전문가로서 질문에 답변 (실제 AWS 데이터 포함)
    */
   async answerWithAWSData(
     query: string,
     userRegion: string,
     awsData?: any
   ): Promise<LLMResponse> {
-    // 작업계획서 생성 의도 확인
-    if (this.detectWorkPlanIntent(query) && this.azureAgent) {
-      console.log("🎯 작업계획서 생성 의도 감지됨, Azure Agent 호출...");
-
-      try {
-        const resourceType = this.extractResourceType(query, awsData);
-
-        const workPlanRequest: WorkPlanRequest = {
-          resourceType,
-          resourceInfo: awsData || {},
-          userRequest: query,
-          awsRegion: userRegion,
-        };
-
-        const workPlanResult = await this.azureAgent.generateWorkPlan(
-          workPlanRequest
-        );
-
-        if (workPlanResult.success) {
-          const combinedResponse = `📋 **작업계획서 생성 완료**
-
-${workPlanResult.workPlan}
-
----
-
-🤖 *Azure AI Agent가 생성한 작업계획서입니다.*
-*Thread ID: ${workPlanResult.threadId}*`;
-
-          return {
-            success: true,
-            answer: combinedResponse,
-          };
-        } else {
-          console.warn(
-            "Azure Agent 실패, 일반 LLM 응답으로 폴백:",
-            workPlanResult.error
-          );
-          // 폴백: 일반 LLM 응답
-        }
-      } catch (error: any) {
-        console.warn("Azure Agent 오류, 일반 LLM 응답으로 폴백:", error);
-        // 폴백: 일반 LLM 응답
-      }
-    }
     const systemPrompt = `당신은 AWS 전문 어시스턴트입니다. 사용자의 질문에 대해 도움이 되는 답변을 제공하세요.
 
 역할:
