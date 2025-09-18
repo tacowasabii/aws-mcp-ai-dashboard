@@ -105,7 +105,7 @@
     {
       "parameters": {
         "sessionIdType": "customKey",
-        "sessionKey": "={{ $('WorkPlan').item.json.body.sessionId }}"
+        "sessionKey": "={{ $('Webhook').item.json.body.sessionId }}"
       },
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
@@ -194,7 +194,7 @@
     {
       "parameters": {
         "sessionIdType": "customKey",
-        "sessionKey": "={{ $('Error').item.json.body.sessionId }}"
+        "sessionKey": "={{ $('Webhook').item.json.body.sessionId }}"
       },
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
@@ -287,7 +287,7 @@
               "rightValue": 1,
               "operator": {
                 "type": "number",
-                "operation": "lt"
+                "operation": "lte"
               }
             }
           ],
@@ -427,6 +427,20 @@
           "name": "Azure Open AI account"
         }
       }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook').item.json.body.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -192,
+        416
+      ],
+      "id": "16a85ca6-bf01-48c1-be21-3d6e851b1c9f",
+      "name": "Simple Memory1"
     }
   ],
   "pinData": {},
@@ -499,7 +513,13 @@
     },
     "Simple Memory": {
       "ai_memory": [
-        []
+        [
+          {
+            "node": "makeplan",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
       ]
     },
     "Azure OpenAI Chat Model2": {
@@ -536,7 +556,13 @@
     },
     "Simple Memory2": {
       "ai_memory": [
-        []
+        [
+          {
+            "node": "오류 해결",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
       ]
     },
     "makeplan": {
@@ -652,13 +678,24 @@
           }
         ]
       ]
+    },
+    "Simple Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "계획서 수정",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "67bf0abc-2c50-44a1-9d17-9b61999979f0",
+  "versionId": "d78d48ce-f3e2-43f9-9f06-ed13ac59d932",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "ac20f92d18975045f55b1eb3a8bbd146a0c6ebd3fc31e377273aedc939f6b93b"
