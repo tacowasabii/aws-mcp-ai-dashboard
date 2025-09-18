@@ -95,6 +95,44 @@ export class BedrockLLMClient {
   }
 
   /**
+   * AWS 에러 분석 및 사용자 친화적 메시지 생성
+   */
+  async analyzeAWSError(errorMessage: string, userRegion: string, context?: string): Promise<LLMResponse> {
+    const systemPrompt = `당신은 AWS 에러 분석 전문가입니다.
+
+역할:
+1. AWS API 에러 메시지를 분석하여 원인을 파악
+2. 사용자가 이해하기 쉬운 한국어로 설명
+3. 구체적이고 실행 가능한 해결 방법 제시
+4. 권한, 설정, 자격증명 문제를 명확히 구분
+
+에러 분석 시 고려사항:
+- 권한 부족: 필요한 IAM 권한과 해결 방법
+- 자격증명 문제: Access Key, Secret Key, 토큰 관련 이슈
+- 서비스 제한: 리전별 제한, 서비스 가용성
+- 네트워크/연결: 엔드포인트, VPC 설정 문제
+- 리소스 상태: 존재하지 않는 리소스, 잘못된 ID
+
+사용자 AWS 리전: ${userRegion}
+컨텍스트: ${context || 'AWS 리소스 조회 시도'}
+
+답변 형식:
+1. 🔍 **문제 원인**: 간단명료한 원인 설명
+2. 💡 **해결 방법**: 구체적인 단계별 해결책
+3. 📋 **추가 정보**: 관련 문서나 추가 도움말 (필요시)
+
+답변은 친근하고 도움이 되는 톤으로 작성하세요.`
+
+    const userPrompt = `다음 AWS 에러를 분석하고 사용자가 이해하기 쉽게 설명해주세요:
+
+에러 메시지: "${errorMessage}"
+
+이 에러의 원인과 해결 방법을 명확하게 설명해주세요.`
+
+    return await this.callBedrock(systemPrompt, userPrompt)
+  }
+
+  /**
    * Bedrock Claude 호출
    */
   private async callBedrock(systemPrompt: string, userPrompt: string): Promise<LLMResponse> {
@@ -177,6 +215,35 @@ export class BedrockLLMClient {
     return {
       success: true,
       answer: `☁️ **AWS 전문 상담** (시뮬레이션)\n\n질문: "${query}"\n\n**현재 구성:**\n- 리전: ${userRegion}\n- 지원 서비스: EC2, EKS, VPC (실시간 데이터)\n\n**답변:**\nAWS에 대한 질문을 해주셔서 감사합니다. 현재 시뮬레이션 모드로 동작 중입니다.\n\nEC2, EKS, VPC에 대한 구체적인 질문을 하시면 실제 AWS 데이터를 조회하여 상세한 분석을 제공해드릴 수 있습니다.\n\n**예시 질문:**\n- "EC2 인스턴스 현황 보여줘"\n- "EKS 클러스터 상태 확인해줘"\n- "VPC 네트워크 구성 분석해줘"\n\n*실제 Bedrock 연결 후 모든 AWS 서비스에 대한 전문적인 답변이 제공됩니다.*`
+    }
+  }
+
+  /**
+   * 에러 시뮬레이션 응답 (Bedrock 사용 불가시)
+   */
+  getSimulationErrorResponse(errorMessage: string, userRegion: string): LLMResponse {
+    // 기본적인 에러 패턴 분석
+    if (errorMessage.includes('not authorized to perform')) {
+      const match = errorMessage.match(/not authorized to perform: ([^\s]+)/)
+      const action = match ? match[1] : '해당 작업'
+
+      return {
+        success: true,
+        answer: `🔍 **문제 원인** (시뮬레이션 분석)\n\n현재 AWS 계정에 **${action}** 권한이 없습니다.\n\n💡 **해결 방법**\n1. AWS IAM 콘솔에서 사용자 권한 확인\n2. 관리자에게 **${action}** 권한 요청\n3. 정책에서 명시적 거부(Deny) 규칙 확인\n\n📋 **추가 정보**\n리전: ${userRegion}\n필요 권한: ${action}\n\n*실제 Bedrock LLM 연결 시 더 상세한 분석과 해결책을 제공합니다.*`
+      }
+    }
+
+    if (errorMessage.includes('InvalidAccessKeyId')) {
+      return {
+        success: true,
+        answer: `🔍 **문제 원인** (시뮬레이션 분석)\n\nAWS Access Key ID가 올바르지 않거나 존재하지 않습니다.\n\n💡 **해결 방법**\n1. AWS 콘솔에서 새로운 Access Key 생성\n2. 기존 키가 삭제되었는지 확인\n3. 올바른 계정의 키를 사용하고 있는지 확인\n\n📋 **추가 정보**\n리전: ${userRegion}\n\n*실제 Bedrock LLM 연결 시 더 정확한 진단을 제공합니다.*`
+      }
+    }
+
+    // 기본 시뮬레이션 응답
+    return {
+      success: true,
+      answer: `🔍 **문제 원인** (시뮬레이션 분석)\n\nAWS API 호출 중 오류가 발생했습니다.\n\n💡 **일반적인 해결 방법**\n1. AWS 자격증명 확인\n2. 필요한 권한 확인\n3. 네트워크 연결 상태 확인\n4. AWS 서비스 상태 페이지 확인\n\n📋 **상세 오류 메시지**\n${errorMessage}\n\n*실제 Bedrock LLM이 연결되면 더 구체적인 분석과 맞춤형 해결책을 제공합니다.*`
     }
   }
 }

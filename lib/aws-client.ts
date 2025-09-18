@@ -192,6 +192,57 @@ export class AWSDirectClient {
   }
 
   /**
+   * AWS 에러를 LLM으로 분석하여 사용자 친화적 메시지로 변환
+   */
+  private async formatAWSError(error: any, context?: string): Promise<string> {
+    const errorMessage = error.message || error.toString()
+
+    if (this.llmClient) {
+      try {
+        console.log('🔍 LLM으로 AWS 에러 분석 중...')
+        const response = await this.llmClient.analyzeAWSError(errorMessage, this.credentials.region, context)
+
+        if (response.success) {
+          console.log('✅ LLM 에러 분석 완료')
+          return response.answer
+        } else {
+          console.warn('LLM 에러 분석 실패, 폴백 사용:', response.error)
+        }
+      } catch (llmError) {
+        console.warn('LLM 에러 분석 중 오류 발생, 폴백 사용:', llmError)
+      }
+    }
+
+    // LLM 사용 불가 또는 실패시 간단한 폴백 메시지
+    return this.getSimpleErrorMessage(errorMessage)
+  }
+
+  /**
+   * LLM 사용 불가시 간단한 에러 메시지 생성
+   */
+  private getSimpleErrorMessage(errorMessage: string): string {
+    if (errorMessage.includes('not authorized to perform')) {
+      const match = errorMessage.match(/not authorized to perform: ([^\s]+)/)
+      const action = match ? match[1] : '해당 작업'
+      return `🔒 **권한 부족**\n\n**${action}** 권한이 필요합니다.\nAWS 관리자에게 권한을 요청하세요.`
+    }
+
+    if (errorMessage.includes('InvalidAccessKeyId')) {
+      return `🔑 **잘못된 Access Key**\n\nAWS Access Key ID를 확인해주세요.`
+    }
+
+    if (errorMessage.includes('SignatureDoesNotMatch')) {
+      return `🔐 **잘못된 Secret Key**\n\nAWS Secret Access Key를 확인해주세요.`
+    }
+
+    if (errorMessage.includes('TokenRefreshRequired')) {
+      return `⏰ **토큰 만료**\n\n새로운 자격증명이 필요합니다.`
+    }
+
+    return `⚠️ **AWS 오류**\n\n${errorMessage}`
+  }
+
+  /**
    * EC2 인스턴스 원시 데이터 조회
    */
   private async getEC2InstancesRawData(): Promise<any> {
@@ -226,7 +277,8 @@ export class AWSDirectClient {
         instances: instances
       }
     } catch (error: any) {
-      throw new Error(`EC2 인스턴스 조회 실패: ${error.message}`)
+      const errorMessage = await this.formatAWSError(error, 'EC2 인스턴스 조회')
+      throw new Error(errorMessage)
     }
   }
 
@@ -269,7 +321,8 @@ export class AWSDirectClient {
         clusters: clusters
       }
     } catch (error: any) {
-      throw new Error(`EKS 클러스터 조회 실패: ${error.message}`)
+      const errorMessage = await this.formatAWSError(error, 'EKS 클러스터 조회')
+      throw new Error(errorMessage)
     }
   }
 
@@ -319,7 +372,8 @@ export class AWSDirectClient {
         subnets: subnets
       }
     } catch (error: any) {
-      throw new Error(`VPC 정보 조회 실패: ${error.message}`)
+      const errorMessage = await this.formatAWSError(error, 'VPC 정보 조회')
+      throw new Error(errorMessage)
     }
   }
 

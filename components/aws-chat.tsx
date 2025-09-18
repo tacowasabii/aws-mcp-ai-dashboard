@@ -49,26 +49,36 @@ export function AWSChat() {
         })
       })
       
-      if (!response.ok) {
-        throw new Error(`API 호출 실패: ${response.status}`)
-      }
-      
       const result = await response.json()
-      
-      // AI 응답 추가
+
+      // 응답 내용 처리 (성공/에러 모두 처리)
+      let messageContent = ''
+      if (result.error) {
+        // 에러가 있는 경우
+        messageContent = `❌ **오류 발생**\n\n${result.data || result.error}`
+      } else {
+        // 정상 응답인 경우
+        messageContent = result.data || '데이터를 조회할 수 없습니다'
+      }
+
       addMessage({
         id: (Date.now() + 1).toString(),
         type: 'ai',
-        content: result.data || '데이터를 조회할 수 없습니다',
+        content: messageContent,
         timestamp: new Date(),
         accountId: activeAccount.id
       })
-      
+
     } catch (error) {
+      // 네트워크 오류나 기타 예외 처리
+      const errorMessage = error instanceof Error
+        ? `❌ **연결 오류**\n\n${error.message}`
+        : '❌ **알 수 없는 오류가 발생했습니다**'
+
       addMessage({
         id: (Date.now() + 1).toString(),
         type: 'ai',
-        content: `오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`,
+        content: errorMessage,
         timestamp: new Date(),
         accountId: activeAccount.id
       })
