@@ -11,6 +11,8 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronUp,
+  Copy,
+  Check,
 } from "lucide-react";
 import { ErrorChat } from "./error-chat";
 
@@ -31,6 +33,7 @@ export function AWSChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingAccountId, setLoadingAccountId] = useState<string | null>(null);
   const [expandedRefs, setExpandedRefs] = useState<Set<string>>(new Set());
+  const [copiedMessages, setCopiedMessages] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const activeAccount = accounts.find((acc) => acc.id === activeAccountId);
@@ -49,7 +52,7 @@ export function AWSChat() {
   }, [accountMessages.length, prevMessageCount]);
 
   const toggleRefsExpansion = (messageId: string) => {
-    setExpandedRefs(prev => {
+    setExpandedRefs((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(messageId)) {
         newSet.delete(messageId);
@@ -58,6 +61,24 @@ export function AWSChat() {
       }
       return newSet;
     });
+  };
+
+  const copyMessage = async (messageId: string, content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedMessages((prev) => new Set(prev).add(messageId));
+
+      // 3초 후 복사 상태 초기화
+      setTimeout(() => {
+        setCopiedMessages((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(messageId);
+          return newSet;
+        });
+      }, 500);
+    } catch (error) {
+      console.error("복사 실패:", error);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -238,14 +259,41 @@ export function AWSChat() {
                   )}
 
                   <div className="flex flex-col gap-2">
-                    <div
-                      className={`max-w-md px-4 py-3 rounded-lg text-sm whitespace-pre-line break-words ${
-                        message.type === "user"
-                          ? "bg-blue-600 text-white"
-                          : "bg-white text-gray-800 shadow-sm border"
-                      }`}
-                    >
-                      {message.content}
+                    <div className="relative group">
+                      <div
+                        className={`max-w-md px-4 py-3 rounded-lg text-sm whitespace-pre-line break-words ${
+                          message.type === "user"
+                            ? "bg-blue-600 text-white"
+                            : "bg-white text-gray-800 shadow-sm border"
+                        }`}
+                      >
+                        {message.content}
+                      </div>
+
+                      {/* 복사 버튼 - AI 메시지에만 표시 */}
+                      {message.type === "ai" && (
+                        <button
+                          onClick={() =>
+                            copyMessage(message.id, message.content)
+                          }
+                          className={`absolute top-2 right-2 p-1 rounded transition-all duration-200 opacity-0 group-hover:opacity-100 ${
+                            copiedMessages.has(message.id)
+                              ? "bg-green-100 text-green-600"
+                              : "bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800"
+                          }`}
+                          title={
+                            copiedMessages.has(message.id)
+                              ? "복사됨!"
+                              : "메시지 복사"
+                          }
+                        >
+                          {copiedMessages.has(message.id) ? (
+                            <Check size={14} />
+                          ) : (
+                            <Copy size={14} />
+                          )}
+                        </button>
+                      )}
                     </div>
 
                     {/* refs가 있는 경우 참조 링크 박스 표시 (AI 메시지에만) */}
@@ -254,7 +302,9 @@ export function AWSChat() {
                       message.refs.length > 0 && (
                         <div className="max-w-md">
                           <div className="flex items-center justify-between mb-1">
-                            <div className="text-xs text-gray-500">📖 레퍼런스</div>
+                            <div className="text-xs text-gray-500">
+                              📖 레퍼런스
+                            </div>
                             {message.refs.length > 2 && (
                               <button
                                 onClick={() => toggleRefsExpansion(message.id)}
@@ -273,7 +323,10 @@ export function AWSChat() {
                             )}
                           </div>
                           <div className="flex flex-wrap gap-1">
-                            {(expandedRefs.has(message.id) ? message.refs : message.refs.slice(0, 2)).map((ref, index) => (
+                            {(expandedRefs.has(message.id)
+                              ? message.refs
+                              : message.refs.slice(0, 2)
+                            ).map((ref, index) => (
                               <a
                                 key={index}
                                 href={ref.link}
@@ -285,11 +338,12 @@ export function AWSChat() {
                                 {ref.title}
                               </a>
                             ))}
-                            {!expandedRefs.has(message.id) && message.refs.length > 2 && (
-                              <span className="inline-block px-2 py-1 text-xs text-gray-500">
-                                +{message.refs.length - 2}개 더
-                              </span>
-                            )}
+                            {!expandedRefs.has(message.id) &&
+                              message.refs.length > 2 && (
+                                <span className="inline-block px-2 py-1 text-xs text-gray-500">
+                                  +{message.refs.length - 2}개 더
+                                </span>
+                              )}
                           </div>
                         </div>
                       )}
