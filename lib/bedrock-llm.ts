@@ -1,39 +1,46 @@
-import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime'
-import { AzureAgentClient, WorkPlanRequest, getAzureAgentConfig } from './azure-agent-client'
+import {
+  BedrockRuntimeClient,
+  InvokeModelCommand,
+} from "@aws-sdk/client-bedrock-runtime";
+import {
+  AzureAgentClient,
+  WorkPlanRequest,
+  getAzureAgentConfig,
+} from "./azure-agent-client";
 
 export interface BedrockLLMConfig {
-  region: string
-  accessKeyId: string
-  secretAccessKey: string
-  modelId: string
+  region: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+  modelId: string;
 }
 
 export interface LLMResponse {
-  success: boolean
-  answer: string
-  error?: string
-  tokensUsed?: number
+  success: boolean;
+  answer: string;
+  error?: string;
+  tokensUsed?: number;
 }
 
 export class BedrockLLMClient {
-  private client: BedrockRuntimeClient
-  private modelId: string
-  private azureAgent: AzureAgentClient | null = null
+  private client: BedrockRuntimeClient;
+  private modelId: string;
+  private azureAgent: AzureAgentClient | null = null;
 
   constructor(config: BedrockLLMConfig) {
     this.client = new BedrockRuntimeClient({
       region: config.region,
       credentials: {
         accessKeyId: config.accessKeyId,
-        secretAccessKey: config.secretAccessKey
-      }
-    })
-    this.modelId = config.modelId
-    
+        secretAccessKey: config.secretAccessKey,
+      },
+    });
+    this.modelId = config.modelId;
+
     // Azure Agent 초기화
-    const azureConfig = getAzureAgentConfig()
+    const azureConfig = getAzureAgentConfig();
     if (azureConfig) {
-      this.azureAgent = new AzureAgentClient(azureConfig)
+      this.azureAgent = new AzureAgentClient(azureConfig);
     }
   }
 
@@ -42,32 +49,58 @@ export class BedrockLLMClient {
    */
   private detectWorkPlanIntent(query: string): boolean {
     const workPlanKeywords = [
-      '작업계획서', '워크플로우', '계획서', '작업 계획', 
-      'workflow', 'work plan', '단계별', '절차', 
-      'cli 명령', 'aws cli', '스크립트'
+      "작업계획서",
+      "워크플로우",
+      "계획서",
+      "작업 계획",
+      "workflow",
+      "work plan",
+      "단계별",
+      "절차",
+      "스크립트",
     ];
-    
+
     const queryLower = query.toLowerCase();
-    return workPlanKeywords.some(keyword => queryLower.includes(keyword.toLowerCase()));
+    return workPlanKeywords.some((keyword) =>
+      queryLower.includes(keyword.toLowerCase())
+    );
   }
 
   /**
    * 리소스 타입 추출
    */
-  private extractResourceType(query: string, awsData?: any): 'ec2' | 'eks' | 'vpc' | 'general' {
+  private extractResourceType(
+    query: string,
+    awsData?: any
+  ): "ec2" | "eks" | "vpc" | "general" {
     const queryLower = query.toLowerCase();
-    
-    if ((queryLower.includes('ec2') || queryLower.includes('인스턴스') || queryLower.includes('서버')) && awsData) {
-      return 'ec2';
+
+    if (
+      (queryLower.includes("ec2") ||
+        queryLower.includes("인스턴스") ||
+        queryLower.includes("서버")) &&
+      awsData
+    ) {
+      return "ec2";
     }
-    if ((queryLower.includes('eks') || queryLower.includes('클러스터') || queryLower.includes('쿠버네티스')) && awsData) {
-      return 'eks';
+    if (
+      (queryLower.includes("eks") ||
+        queryLower.includes("클러스터") ||
+        queryLower.includes("쿠버네티스")) &&
+      awsData
+    ) {
+      return "eks";
     }
-    if ((queryLower.includes('vpc') || queryLower.includes('네트워크') || queryLower.includes('서브넷')) && awsData) {
-      return 'vpc';
+    if (
+      (queryLower.includes("vpc") ||
+        queryLower.includes("네트워크") ||
+        queryLower.includes("서브넷")) &&
+      awsData
+    ) {
+      return "vpc";
     }
-    
-    return 'general';
+
+    return "general";
   }
 
   /**
@@ -80,20 +113,22 @@ export class BedrockLLMClient {
   ): Promise<LLMResponse> {
     // 작업계획서 생성 의도 확인
     if (this.detectWorkPlanIntent(query) && this.azureAgent) {
-      console.log('🎯 작업계획서 생성 의도 감지됨, Azure Agent 호출...');
-      
+      console.log("🎯 작업계획서 생성 의도 감지됨, Azure Agent 호출...");
+
       try {
         const resourceType = this.extractResourceType(query, awsData);
-        
+
         const workPlanRequest: WorkPlanRequest = {
           resourceType,
           resourceInfo: awsData || {},
           userRequest: query,
-          awsRegion: userRegion
+          awsRegion: userRegion,
         };
-        
-        const workPlanResult = await this.azureAgent.generateWorkPlan(workPlanRequest);
-        
+
+        const workPlanResult = await this.azureAgent.generateWorkPlan(
+          workPlanRequest
+        );
+
         if (workPlanResult.success) {
           const combinedResponse = `📋 **작업계획서 생성 완료**
 
@@ -103,17 +138,20 @@ ${workPlanResult.workPlan}
 
 🤖 *Azure AI Agent가 생성한 작업계획서입니다.*
 *Thread ID: ${workPlanResult.threadId}*`;
-          
+
           return {
             success: true,
-            answer: combinedResponse
+            answer: combinedResponse,
           };
         } else {
-          console.warn('Azure Agent 실패, 일반 LLM 응답으로 폴백:', workPlanResult.error);
+          console.warn(
+            "Azure Agent 실패, 일반 LLM 응답으로 폴백:",
+            workPlanResult.error
+          );
           // 폴백: 일반 LLM 응답
         }
       } catch (error: any) {
-        console.warn('Azure Agent 오류, 일반 LLM 응답으로 폴백:', error);
+        console.warn("Azure Agent 오류, 일반 LLM 응답으로 폴백:", error);
         // 폴백: 일반 LLM 응답
       }
     }
@@ -133,25 +171,28 @@ ${workPlanResult.workPlan}
 
 사용자 AWS 리전: ${userRegion}
 
-실제 AWS 데이터: ${awsData ? JSON.stringify(awsData, null, 2) : '없음'}
+실제 AWS 데이터: ${awsData ? JSON.stringify(awsData, null, 2) : "없음"}
 
 답변 시 다음을 포함하세요:
 - 명확하고 실용적인 정보
 - 관련된 AWS 모범 사례
 - 가능한 경우 구체적인 권장사항
-- 적절한 이모지 사용으로 가독성 향상`
+- 적절한 이모지 사용으로 가독성 향상`;
 
     const userPrompt = awsData
       ? `위의 실제 AWS 데이터를 바탕으로 다음 질문에 답변해주세요: "${query}"`
-      : `다음 AWS 관련 질문에 답변해주세요: "${query}"`
+      : `다음 AWS 관련 질문에 답변해주세요: "${query}"`;
 
-    return await this.callBedrock(systemPrompt, userPrompt)
+    return await this.callBedrock(systemPrompt, userPrompt);
   }
 
   /**
    * 일반적인 AWS 질문 답변 (데이터 없이)
    */
-  async answerGeneralAWS(query: string, userRegion: string): Promise<LLMResponse> {
+  async answerGeneralAWS(
+    query: string,
+    userRegion: string
+  ): Promise<LLMResponse> {
     const systemPrompt = `당신은 AWS 전문 어시스턴트입니다.
 
 역할:
@@ -169,15 +210,19 @@ ${workPlanResult.workPlan}
 - 명확하고 실용적인 정보
 - 관련된 AWS 모범 사례
 - 단계별 가이드 (필요한 경우)
-- 적절한 이모지 사용으로 가독성 향상`
+- 적절한 이모지 사용으로 가독성 향상`;
 
-    return await this.callBedrock(systemPrompt, query)
+    return await this.callBedrock(systemPrompt, query);
   }
 
   /**
    * AWS 에러 분석 및 사용자 친화적 메시지 생성
    */
-  async analyzeAWSError(errorMessage: string, userRegion: string, context?: string): Promise<LLMResponse> {
+  async analyzeAWSError(
+    errorMessage: string,
+    userRegion: string,
+    context?: string
+  ): Promise<LLMResponse> {
     const systemPrompt = `당신은 AWS 에러 분석 전문가입니다.
 
 역할:
@@ -194,28 +239,31 @@ ${workPlanResult.workPlan}
 - 리소스 상태: 존재하지 않는 리소스, 잘못된 ID
 
 사용자 AWS 리전: ${userRegion}
-컨텍스트: ${context || 'AWS 리소스 조회 시도'}
+컨텍스트: ${context || "AWS 리소스 조회 시도"}
 
 답변 형식:
 1. 🔍 **문제 원인**: 간단명료한 원인 설명
 2. 💡 **해결 방법**: 구체적인 단계별 해결책
 3. 📋 **추가 정보**: 관련 문서나 추가 도움말 (필요시)
 
-답변은 친근하고 도움이 되는 톤으로 작성하세요.`
+답변은 친근하고 도움이 되는 톤으로 작성하세요.`;
 
     const userPrompt = `다음 AWS 에러를 분석하고 사용자가 이해하기 쉽게 설명해주세요:
 
 에러 메시지: "${errorMessage}"
 
-이 에러의 원인과 해결 방법을 명확하게 설명해주세요.`
+이 에러의 원인과 해결 방법을 명확하게 설명해주세요.`;
 
-    return await this.callBedrock(systemPrompt, userPrompt)
+    return await this.callBedrock(systemPrompt, userPrompt);
   }
 
   /**
    * Bedrock Claude 호출
    */
-  private async callBedrock(systemPrompt: string, userPrompt: string): Promise<LLMResponse> {
+  private async callBedrock(
+    systemPrompt: string,
+    userPrompt: string
+  ): Promise<LLMResponse> {
     const requestBody = {
       anthropic_version: "bedrock-2023-05-31",
       max_tokens: 2000,
@@ -224,52 +272,56 @@ ${workPlanResult.workPlan}
       messages: [
         {
           role: "user",
-          content: userPrompt
-        }
-      ]
-    }
+          content: userPrompt,
+        },
+      ],
+    };
 
     try {
-      console.log('🤖 Bedrock Claude 호출 중...')
+      console.log("🤖 Bedrock Claude 호출 중...");
 
       const command = new InvokeModelCommand({
         modelId: this.modelId,
         body: JSON.stringify(requestBody),
-        contentType: 'application/json'
-      })
+        contentType: "application/json",
+      });
 
-      const response = await this.client.send(command)
-      const responseBody = JSON.parse(new TextDecoder().decode(response.body))
-      const answer = responseBody.content?.[0]?.text || '응답을 생성할 수 없습니다.'
+      const response = await this.client.send(command);
+      const responseBody = JSON.parse(new TextDecoder().decode(response.body));
+      const answer =
+        responseBody.content?.[0]?.text || "응답을 생성할 수 없습니다.";
 
-      console.log('✅ Bedrock Claude 응답 수신')
+      console.log("✅ Bedrock Claude 응답 수신");
 
       return {
         success: true,
         answer: answer,
-        tokensUsed: responseBody.usage?.output_tokens
-      }
-
+        tokensUsed: responseBody.usage?.output_tokens,
+      };
     } catch (error: any) {
-      console.error('❌ Bedrock API 오류:', error)
+      console.error("❌ Bedrock API 오류:", error);
 
       return {
         success: false,
-        answer: '',
-        error: `Bedrock API 호출 실패: ${error.message}`
-      }
+        answer: "",
+        error: `Bedrock API 호출 실패: ${error.message}`,
+      };
     }
   }
 
   /**
    * 시뮬레이션 응답 (Bedrock 사용 불가시)
    */
-  getSimulationResponse(query: string, userRegion: string, awsData?: any): LLMResponse {
-    const queryLower = query.toLowerCase()
+  getSimulationResponse(
+    query: string,
+    userRegion: string,
+    awsData?: any
+  ): LLMResponse {
+    const queryLower = query.toLowerCase();
 
     if (awsData) {
       // AWS 데이터가 있는 경우
-      if (queryLower.includes('ec2') || queryLower.includes('인스턴스')) {
+      if (queryLower.includes("ec2") || queryLower.includes("인스턴스")) {
         return {
           success: true,
           answer: `🖥️ **EC2 인스턴스 분석** (시뮬레이션)
@@ -282,11 +334,11 @@ ${JSON.stringify(awsData, null, 2)}
 - 사용하지 않는 인스턴스는 중지하여 비용을 절약하세요
 - 적절한 인스턴스 타입을 선택하여 성능을 최적화하세요
 
-*실제 Bedrock 연결 후 더 상세한 분석이 제공됩니다.*`
-        }
+*실제 Bedrock 연결 후 더 상세한 분석이 제공됩니다.*`,
+        };
       }
 
-      if (queryLower.includes('eks') || queryLower.includes('클러스터')) {
+      if (queryLower.includes("eks") || queryLower.includes("클러스터")) {
         return {
           success: true,
           answer: `⚓ **EKS 클러스터 분석** (시뮬레이션)
@@ -299,11 +351,11 @@ ${JSON.stringify(awsData, null, 2)}
 - 클러스터 버전을 최신으로 유지하세요
 - 적절한 노드 그룹 설정을 확인하세요
 
-*실제 Bedrock 연결 후 더 상세한 분석이 제공됩니다.*`
-        }
+*실제 Bedrock 연결 후 더 상세한 분석이 제공됩니다.*`,
+        };
       }
 
-      if (queryLower.includes('vpc') || queryLower.includes('네트워크')) {
+      if (queryLower.includes("vpc") || queryLower.includes("네트워크")) {
         return {
           success: true,
           answer: `🌐 **VPC 네트워크 분석** (시뮬레이션)
@@ -316,8 +368,8 @@ ${JSON.stringify(awsData, null, 2)}
 - 보안 그룹 설정을 정기적으로 검토하세요
 - 서브넷 구성이 적절한지 확인하세요
 
-*실제 Bedrock 연결 후 더 상세한 분석이 제공됩니다.*`
-        }
+*실제 Bedrock 연결 후 더 상세한 분석이 제공됩니다.*`,
+        };
       }
     }
 
@@ -342,18 +394,21 @@ EC2, EKS, VPC에 대한 구체적인 질문을 하시면 실제 AWS 데이터를
 - "EKS 클러스터 상태 확인해줘"
 - "VPC 네트워크 구성 분석해줘"
 
-*실제 Bedrock 연결 후 모든 AWS 서비스에 대한 전문적인 답변이 제공됩니다.*`
-    }
+*실제 Bedrock 연결 후 모든 AWS 서비스에 대한 전문적인 답변이 제공됩니다.*`,
+    };
   }
 
   /**
    * 에러 시뮬레이션 응답 (Bedrock 사용 불가시)
    */
-  getSimulationErrorResponse(errorMessage: string, userRegion: string): LLMResponse {
+  getSimulationErrorResponse(
+    errorMessage: string,
+    userRegion: string
+  ): LLMResponse {
     // 기본적인 에러 패턴 분석
-    if (errorMessage.includes('not authorized to perform')) {
-      const match = errorMessage.match(/not authorized to perform: ([^\s]+)/)
-      const action = match ? match[1] : '해당 작업'
+    if (errorMessage.includes("not authorized to perform")) {
+      const match = errorMessage.match(/not authorized to perform: ([^\s]+)/);
+      const action = match ? match[1] : "해당 작업";
 
       return {
         success: true,
@@ -370,11 +425,11 @@ EC2, EKS, VPC에 대한 구체적인 질문을 하시면 실제 AWS 데이터를
 리전: ${userRegion}
 필요 권한: ${action}
 
-*실제 Bedrock LLM 연결 시 더 상세한 분석과 해결책을 제공합니다.*`
-      }
+*실제 Bedrock LLM 연결 시 더 상세한 분석과 해결책을 제공합니다.*`,
+      };
     }
 
-    if (errorMessage.includes('InvalidAccessKeyId')) {
+    if (errorMessage.includes("InvalidAccessKeyId")) {
       return {
         success: true,
         answer: `🔍 **문제 원인** (시뮬레이션 분석)
@@ -389,8 +444,8 @@ AWS Access Key ID가 올바르지 않거나 존재하지 않습니다.
 📋 **추가 정보**
 리전: ${userRegion}
 
-*실제 Bedrock LLM 연결 시 더 정확한 진단을 제공합니다.*`
-      }
+*실제 Bedrock LLM 연결 시 더 정확한 진단을 제공합니다.*`,
+      };
     }
 
     // 기본 시뮬레이션 응답
@@ -409,8 +464,8 @@ AWS API 호출 중 오류가 발생했습니다.
 📋 **상세 오류 메시지**
 ${errorMessage}
 
-*실제 Bedrock LLM이 연결되면 더 구체적인 분석과 맞춤형 해결책을 제공합니다.*`
-    }
+*실제 Bedrock LLM이 연결되면 더 구체적인 분석과 맞춤형 해결책을 제공합니다.*`,
+    };
   }
 }
 
@@ -418,20 +473,23 @@ ${errorMessage}
  * Bedrock 설정을 환경변수에서 가져오기
  */
 export function getBedrockConfig(): BedrockLLMConfig | null {
-  const region = process.env.BEDROCK_REGION
-  const accessKeyId = process.env.BEDROCK_ACCESS_KEY_ID
-  const secretAccessKey = process.env.BEDROCK_SECRET_ACCESS_KEY
-  const modelId = process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-sonnet-20240229-v1:0'
+  const region = process.env.BEDROCK_REGION;
+  const accessKeyId = process.env.BEDROCK_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.BEDROCK_SECRET_ACCESS_KEY;
+  const modelId =
+    process.env.BEDROCK_MODEL_ID || "anthropic.claude-3-sonnet-20240229-v1:0";
 
   if (!region || !accessKeyId || !secretAccessKey) {
-    console.warn('⚠️ Bedrock 환경변수가 설정되지 않았습니다. 시뮬레이션 모드로 동작합니다.')
-    return null
+    console.warn(
+      "⚠️ Bedrock 환경변수가 설정되지 않았습니다. 시뮬레이션 모드로 동작합니다."
+    );
+    return null;
   }
 
   return {
     region,
     accessKeyId,
     secretAccessKey,
-    modelId
-  }
+    modelId,
+  };
 }

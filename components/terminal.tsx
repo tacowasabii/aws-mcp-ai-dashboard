@@ -41,7 +41,8 @@ export function Terminal() {
   const [dragStartHeight, setDragStartHeight] = useState(0);
 
   const terminalRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const inputContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (terminalRef.current) {
@@ -94,17 +95,17 @@ export function Terminal() {
     };
 
     if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = 'ns-resize';
-      document.body.style.userSelect = 'none';
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "ns-resize";
+      document.body.style.userSelect = "none";
     }
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
     };
   }, [isDragging, dragStartY, dragStartHeight, setTerminalHeight]);
 
@@ -253,7 +254,22 @@ export function Terminal() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "ArrowUp") {
+    if (e.key === "Enter" && !e.shiftKey) {
+      // Enter만 누르면 명령어 실행
+      e.preventDefault();
+      handleSubmit(e as any);
+    } else if (e.key === "Enter" && e.shiftKey) {
+      // Shift+Enter는 줄바꿈 - 약간의 지연 후 스크롤
+      setTimeout(() => {
+        if (inputContainerRef.current) {
+          inputContainerRef.current.scrollIntoView({
+            behavior: "smooth",
+            block: "end",
+          });
+        }
+      }, 10);
+      return; // 기본 동작 허용
+    } else if (e.key === "ArrowUp") {
       e.preventDefault();
       if (commandHistory.length > 0) {
         const newIndex =
@@ -295,7 +311,7 @@ export function Terminal() {
       className="fixed bottom-0 left-0 right-0 bg-gray-900 text-green-400 font-mono text-sm border-t border-gray-700 z-40"
       style={{
         height: isTerminalMinimized ? "40px" : `${terminalHeight}px`,
-        transition: isDragging ? 'none' : 'height 0.3s ease'
+        transition: isDragging ? "none" : "height 0.3s ease",
       }}
     >
       {/* Resizer */}
@@ -368,20 +384,43 @@ export function Terminal() {
           </div>
 
           {/* Input */}
-          <div className="border-t border-gray-700 px-4 py-3 bg-gray-900">
+          <div
+            ref={inputContainerRef}
+            className="border-t border-gray-700 px-4 py-3 bg-gray-900"
+          >
             <form onSubmit={handleSubmit}>
-              <div className="flex items-center gap-2">
+              <div className="flex items-start gap-2">
                 <span className="text-yellow-400">$</span>
-                <input
-                  ref={inputRef}
-                  type="text"
+                <textarea
+                  ref={inputRef as any}
                   value={currentCommand}
                   onChange={(e) => setCurrentCommand(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className="flex-1 bg-transparent outline-none text-green-400"
-                  placeholder="Enter command..."
+                  className="flex-1 bg-transparent outline-none text-green-400 resize-none min-h-[24px] max-h-[120px]"
+                  placeholder="Enter command... (Shift+Enter for new line, Enter to execute)"
                   disabled={isLoading}
-                  autoComplete="off"
+                  rows={1}
+                  style={{
+                    height: "auto",
+                    minHeight: "24px",
+                    maxHeight: "120px",
+                    overflowY:
+                      currentCommand.split("\n").length > 5 ? "auto" : "hidden",
+                  }}
+                  onInput={(e) => {
+                    const target = e.target as HTMLTextAreaElement;
+                    target.style.height = "auto";
+                    const newHeight = Math.min(target.scrollHeight, 120);
+                    target.style.height = newHeight + "px";
+
+                    // 입력창이 커질 때 터미널 출력을 위로 스크롤
+                    if (inputContainerRef.current && terminalRef.current) {
+                      inputContainerRef.current.scrollIntoView({
+                        behavior: "smooth",
+                        block: "end",
+                      });
+                    }
+                  }}
                 />
               </div>
             </form>
