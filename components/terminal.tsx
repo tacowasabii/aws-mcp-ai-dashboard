@@ -297,7 +297,12 @@ export function Terminal() {
   if (!isTerminalOpen) {
     return (
       <button
-        onClick={() => setTerminalOpen(true)}
+        onClick={() => {
+          // 터미널 열 때 상태 초기화
+          setTerminalOpen(true);
+          setTerminalMinimized(false);
+          setTerminalHeight(384); // 기본 높이로 리셋
+        }}
         className="fixed bottom-4 right-4 bg-gray-800 text-white p-3 rounded-full shadow-lg hover:bg-gray-700 transition-colors z-50"
         title="Open Terminal"
       >
