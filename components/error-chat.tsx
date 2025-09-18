@@ -2,7 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useAppStore } from "@/lib/stores";
-import { RotateCcw, AlertTriangle, CheckCircle, Search } from "lucide-react";
+import {
+  RotateCcw,
+  AlertTriangle,
+  CheckCircle,
+  Search,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { supabase } from "@/utils/supabase";
 
 interface ErrorSolution {
@@ -19,6 +26,7 @@ export function ErrorChat() {
   const [errorSolutions, setErrorSolutions] = useState<ErrorSolution[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
 
   const activeAccount = accounts.find((acc) => acc.id === activeAccountId);
 
@@ -55,6 +63,18 @@ export function ErrorChat() {
         .includes(searchTerm.toLowerCase()) ||
       solution.fixed_command?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const toggleExpanded = (index: number) => {
+    setExpandedItems((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
+  };
 
   if (!activeAccount) {
     return (
@@ -114,89 +134,107 @@ export function ErrorChat() {
             <p className="text-sm text-gray-400">다른 키워드로 검색해보세요.</p>
           </div>
         ) : (
-          filteredSolutions.map((solution, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow"
-            >
-              {/* 에러 코드 및 상태 */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle size={16} className="text-red-500" />
-                  <h3 className="font-medium text-gray-900">
-                    {solution.error_code || "에러 코드 없음"}
-                  </h3>
+          filteredSolutions.map((solution, index) => {
+            const isExpanded = expandedItems.has(index);
+            return (
+              <div
+                key={index}
+                className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+              >
+                {/* 클릭 가능한 헤더 */}
+                <div
+                  onClick={() => toggleExpanded(index)}
+                  className="flex items-center justify-between gap-2 p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center gap-3 flex-1">
+                    <AlertTriangle
+                      size={16}
+                      className="text-red-500 flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-gray-900 truncate">
+                        {solution.error_code || "에러 코드 없음"}
+                      </h3>
+                      {solution.error_description && (
+                        <p className="text-sm text-gray-600 mt-1 break-words line-clamp-2">
+                          {solution.error_description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <div title="해결됨">
+                      <CheckCircle size={16} className="text-green-500" />
+                    </div>
+                    {isExpanded ? (
+                      <ChevronUp size={16} className="text-gray-400" />
+                    ) : (
+                      <ChevronDown size={16} className="text-gray-400" />
+                    )}
+                  </div>
                 </div>
-                <div title="해결됨">
-                  <CheckCircle size={16} className="text-green-500" />
-                </div>
+
+                {/* 펼쳐지는 상세 내용 */}
+                {isExpanded && (
+                  <div className="px-4 pb-4 border-t border-gray-100">
+                    <div className="pt-4 space-y-4">
+                      {/* 에러 설명 */}
+                      {solution.error_description && (
+                        <div className="w-full">
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">
+                            문제 설명
+                          </h4>
+                          <p className="text-sm text-gray-600 bg-red-50 p-3 rounded border-l-4 border-red-200 break-words">
+                            {solution.error_description}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* 원본 명령어 */}
+                      {solution.original_command && (
+                        <div className="w-full">
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">
+                            문제가 된 명령어
+                          </h4>
+                          <div className="bg-gray-100 rounded overflow-hidden">
+                            <pre className="text-sm p-3 font-mono text-red-600 whitespace-pre-wrap break-all overflow-x-auto max-w-full">
+                              {solution.original_command}
+                            </pre>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 수정된 명령어 */}
+                      {solution.fixed_command && (
+                        <div className="w-full">
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">
+                            수정된 명령어
+                          </h4>
+                          <div className="bg-green-50 rounded border-l-4 border-green-200 overflow-hidden">
+                            <pre className="text-sm p-3 font-mono text-green-700 whitespace-pre-wrap break-all overflow-x-auto max-w-full">
+                              {solution.fixed_command}
+                            </pre>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 설명 */}
+                      {solution.explanation && (
+                        <div className="w-full">
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">
+                            해결 방법 설명
+                          </h4>
+                          <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded break-words">
+                            {solution.explanation}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-
-              {/* 에러 설명 */}
-              {solution.error_description && (
-                <div className="mb-3">
-                  <h4 className="text-sm font-medium text-gray-700 mb-1">
-                    문제 설명
-                  </h4>
-                  <p className="text-sm text-gray-600 bg-red-50 p-2 rounded border-l-4 border-red-200">
-                    {solution.error_description}
-                  </p>
-                </div>
-              )}
-
-              {/* 원본 명령어 */}
-              {solution.original_command && (
-                <div className="mb-3">
-                  <h4 className="text-sm font-medium text-gray-700 mb-1">
-                    문제가 된 명령어
-                  </h4>
-                  <pre className="text-sm bg-gray-100 p-2 rounded font-mono text-red-600 whitespace-pre-wrap">
-                    {solution.original_command}
-                  </pre>
-                </div>
-              )}
-
-              {/* 수정된 명령어 */}
-              {solution.fixed_command && (
-                <div className="mb-3">
-                  <h4 className="text-sm font-medium text-gray-700 mb-1">
-                    수정된 명령어
-                  </h4>
-                  <pre className="text-sm bg-green-50 p-2 rounded font-mono text-green-700 whitespace-pre-wrap border-l-4 border-green-200">
-                    {solution.fixed_command}
-                  </pre>
-                </div>
-              )}
-
-              {/* 설명 */}
-              {solution.explanation && (
-                <div className="mb-3">
-                  <h4 className="text-sm font-medium text-gray-700 mb-1">
-                    해결 방법 설명
-                  </h4>
-                  <p className="text-sm text-gray-600 bg-blue-50 p-2 rounded">
-                    {solution.explanation}
-                  </p>
-                </div>
-              )}
-
-              {/* 관련 문서 */}
-              {/* {solution.related_documentation && (
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-1">관련 문서</h4>
-                  <a
-                    href={solution.related_documentation}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                  >
-                    <ExternalLink size={12} />
-                    참조 문서 보기
-                  </a>
-                </div>
-              )} */}
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </>
