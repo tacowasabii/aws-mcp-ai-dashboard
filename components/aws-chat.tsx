@@ -25,11 +25,16 @@ export function AWSChat() {
 
   const activeAccount = accounts.find(acc => acc.id === activeAccountId)
   const accountMessages = messages.filter(msg => msg.accountId === activeAccountId)
-  
-  // 새 메시지가 추가될 때마다 스크롤을 맨 아래로
+
+  // 메시지 개수를 추적하여 실제로 메시지가 추가될 때만 스크롤
+  const [prevMessageCount, setPrevMessageCount] = useState(0)
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [accountMessages])
+    if (accountMessages.length > prevMessageCount) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+    setPrevMessageCount(accountMessages.length)
+  }, [accountMessages.length, prevMessageCount])
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
