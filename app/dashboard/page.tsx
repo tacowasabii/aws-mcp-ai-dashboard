@@ -51,11 +51,10 @@ export default function DashboardPage() {
           <div className="flex flex-col lg:flex-row gap-6 h-full">
             {/* 사이드바: 계정 관리 & 연결 상태 */}
             <div className="space-y-6">
-              <div className="bg-white rounded-lg shadow p-4">
+              <div className="bg-white rounded-lg shadow p-4 lg:w-[230px]">
                 <h2 className="text-base font-medium mb-3">AWS 계정</h2>
                 <AccountList />
               </div>
-
             </div>
 
             {/* 메인: AI 채팅 영역 */}
