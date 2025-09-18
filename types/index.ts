@@ -5,16 +5,6 @@ export interface AWSCredentials {
   region?: string
 }
 
-// LLM + MCP 통합 타입들
-export interface LLMAWSResponse {
-  success: boolean
-  answer?: string
-  data?: any
-  mcpUsed?: boolean
-  reasoning?: string
-  error?: string
-}
-
 export interface AWSAccount {
   id: string
   name: string
@@ -39,10 +29,30 @@ export interface EC2Instance {
   launchTime?: Date
 }
 
-export interface S3Bucket {
+export interface EKSCluster {
   name: string
-  creationDate?: Date
-  region?: string
+  status: string
+  version: string
+  endpoint?: string
+  createdAt?: Date
+  roleArn?: string
+}
+
+export interface VPCInfo {
+  vpcId: string
+  cidrBlock: string
+  state: string
+  isDefault: boolean
+  tags?: Record<string, string>
+}
+
+export interface SubnetInfo {
+  subnetId: string
+  vpcId: string
+  cidrBlock: string
+  availabilityZone: string
+  state: string
+  tags?: Record<string, string>
 }
 
 export interface AWSAccountInfo {
@@ -52,41 +62,6 @@ export interface AWSAccountInfo {
   region: string
 }
 
-// MCP 관련 타입들
-export interface MCPTool {
-  name: string
-  description: string
-  inputSchema: {
-    type: string
-    properties: Record<string, any>
-    required: string[]
-  }
-}
-
-export interface MCPToolCall {
-  toolName: string
-  parameters: any
-  reason?: string
-}
-
-export interface MCPToolResult {
-  toolName: string
-  data: any
-  success: boolean
-  error?: string
-}
-
-export interface MCPServer {
-  id: string
-  name: string
-  url: string
-  accountId: string
-  isConnected: boolean
-  tools?: MCPTool[]
-  resources?: any[]
-  prompts?: any[]
-}
-
 // 채팅 관련 타입들
 export interface ChatMessage {
   id: string
@@ -94,30 +69,6 @@ export interface ChatMessage {
   content: string
   timestamp: Date
   accountId?: string
-  toolCalls?: MCPToolCall[]
-  toolResults?: MCPToolResult[]
-}
-
-export interface BedrockMessage {
-  role: 'user' | 'assistant'
-  content: string
-}
-
-// Bedrock 관련 타입들
-export interface BedrockConfig {
-  modelId: string
-  region: string
-  isConfigured: boolean
-  accessKeyId?: string
-  secretAccessKey?: string
-}
-
-export interface BedrockResponse {
-  data: string
-  usage?: {
-    inputTokens: number
-    outputTokens: number
-  }
 }
 
 // API 응답 타입들
@@ -130,16 +81,15 @@ export interface APIResponse<T = any> {
 
 export interface AWSQueryResponse {
   data: string
-  fallback?: string
   info?: string
   error?: string
   code?: string
 }
 
 // 유틸리티 타입들
-export type AWSRegion = 
+export type AWSRegion =
   | 'us-east-1'
-  | 'us-east-2' 
+  | 'us-east-2'
   | 'us-west-1'
   | 'us-west-2'
   | 'eu-west-1'
@@ -152,18 +102,3 @@ export type AWSRegion =
 export type MessageType = 'user' | 'ai' | 'system' | 'error'
 
 export type LoadingState = 'idle' | 'loading' | 'success' | 'error'
-
-// 환경변수 타입 (LLM + MCP 통합)
-export interface EnvConfig {
-  // LLM API 키 (OpenAI 또는 Anthropic)
-  OPENAI_API_KEY?: string
-  ANTHROPIC_API_KEY?: string
-
-  // AWS MCP 서버 설정
-  AWS_MCP_SERVER_URL?: string
-  AWS_MCP_TIMEOUT?: string
-
-  // 기타 설정
-  NODE_ENV?: string
-  NEXT_PUBLIC_APP_URL?: string
-}

@@ -5,8 +5,7 @@ import { useAppStore } from "@/lib/stores";
 import { AddAccountModal } from "@/components/add-account-modal";
 import { AccountList } from "@/components/account-list";
 import { ConnectionStatus } from "@/components/connection-status";
-import { MCPConnection } from "@/components/mcp-connection";
-import { MCPChat } from "@/components/mcp-chat";
+import { AWSChat } from "@/components/aws-chat";
 import { Plus } from "lucide-react";
 
 export default function DashboardPage() {
@@ -21,7 +20,7 @@ export default function DashboardPage() {
         <nav className="bg-white shadow-sm border-b">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
-              <h1 className="text-xl font-semibold">AWS MCP AI Dashboard</h1>
+              <h1 className="text-xl font-semibold">AWS Dashboard</h1>
               <div className="flex items-center gap-4">
                 <ConnectionStatus />
                 {activeAccount && (
@@ -56,17 +55,13 @@ export default function DashboardPage() {
                 <AccountList />
               </div>
 
-              <div className="bg-white rounded-lg shadow p-4">
-                <h2 className="text-base font-medium mb-3">연결 상태</h2>
-                <MCPConnection />
-              </div>
             </div>
 
             {/* 메인: AI 채팅 영역 */}
             <div className="lg:col-span-3 flex-grow bg-white rounded-lg shadow p-6 flex flex-col">
-              <h2 className="text-lg font-medium mb-4">AWS AI 어시스턴트</h2>
+              <h2 className="text-lg font-medium mb-4">AWS 리소스 조회</h2>
               <div className="flex-1 min-h-0">
-                <MCPChat />
+                <AWSChat />
               </div>
             </div>
           </div>

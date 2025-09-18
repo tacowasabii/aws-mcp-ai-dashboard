@@ -20,11 +20,6 @@ export interface ChatMessage {
   accountId?: string
 }
 
-export interface BedrockConfig {
-  modelId: string
-  region: string
-  isConfigured: boolean
-}
 
 interface AppState {
   // AWS 계정 상태
@@ -35,8 +30,6 @@ interface AppState {
   messages: ChatMessage[]
   isLoading: boolean
   
-  // Bedrock 설정 상태
-  bedrockConfig: BedrockConfig
   
   // 액션들
   addAccount: (account: AWSAccount) => void
@@ -48,7 +41,6 @@ interface AppState {
   clearMessages: () => void
   setLoading: (loading: boolean) => void
   
-  setBedrockConfig: (config: Partial<BedrockConfig>) => void
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -56,11 +48,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   activeAccountId: null,
   messages: [],
   isLoading: false,
-  bedrockConfig: {
-    modelId: 'us.anthropic.claude-3-7-sonnet-20250219-v1:0',
-    region: 'us-east-1',
-    isConfigured: false
-  },
   
   addAccount: (account) => 
     set((state) => {
@@ -104,12 +91,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ messages: [] }),
     
   setLoading: (loading) =>
-    set({ isLoading: loading }),
-    
-  setBedrockConfig: (config) =>
-    set((state) => ({
-      bedrockConfig: { ...state.bedrockConfig, ...config }
-    }))
+    set({ isLoading: loading })
 }))
 
 // 편의 함수들

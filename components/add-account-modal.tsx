@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useAppStore } from '@/lib/stores'
 import { AWSAccount } from '@/types'
-import { MCPAWSCredentials } from '@/lib/mcp-credential-manager'
 import { X, Loader2 } from 'lucide-react'
 
 interface AddAccountModalProps {
@@ -114,7 +113,7 @@ export function AddAccountModal({ isOpen, onClose }: AddAccountModalProps) {
               value={formData.accessKeyId}
               onChange={(e) => setFormData({...formData, accessKeyId: e.target.value})}
               className="w-full border rounded px-3 py-2"
-              placeholder="AKIA..."
+              placeholder="Access Key ID..."
               required
               disabled={isVerifying}
             />
