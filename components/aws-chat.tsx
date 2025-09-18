@@ -135,11 +135,13 @@ export function AWSChat() {
       } else {
         // 정상 응답인 경우 - 객체인 경우 문자열로 변환
         if (typeof result.data === "string") {
-          messageContent = result.data;
+          messageContent =
+            result.data || "요청이 성공했으나 응답이 비어있습니다.";
         } else if (typeof result.data === "object" && result.data !== null) {
           messageContent = JSON.stringify(result.data, null, 2);
         } else {
-          messageContent = result.data || "데이터를 조회할 수 없습니다";
+          messageContent =
+            result.data || "요청이 성공했으나 응답이 비어있습니다.";
         }
       }
 
