@@ -29,9 +29,10 @@ interface AppState {
 
   // 채팅 상태
   messages: ChatMessage[]
+  errorMessages: ChatMessage[]
   isLoading: boolean
   conversationSessions: Map<string, string> // accountId -> conversationId 매핑
-
+  activeChatTab: 'workflow' | 'error'
 
   // 액션들
   addAccount: (account: AWSAccount) => void
@@ -40,8 +41,11 @@ interface AppState {
   updateAccount: (accountId: string, updates: Partial<AWSAccount>) => void
 
   addMessage: (message: ChatMessage) => void
+  addErrorMessage: (message: ChatMessage) => void
   clearMessages: () => void
+  clearErrorMessages: () => void
   setLoading: (loading: boolean) => void
+  setActiveChatTab: (tab: 'workflow' | 'error') => void
   startNewConversation: (accountId: string) => string // 새 대화 세션 시작
   getConversationId: (accountId: string) => string | undefined
 
@@ -51,8 +55,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   accounts: [],
   activeAccountId: null,
   messages: [],
+  errorMessages: [],
   isLoading: false,
   conversationSessions: new Map(),
+  activeChatTab: 'workflow',
   
   addAccount: (account) => 
     set((state) => {
@@ -87,16 +93,27 @@ export const useAppStore = create<AppState>((set, get) => ({
       )
     })),
     
-  addMessage: (message) => 
-    set((state) => ({ 
-      messages: [...state.messages, message] 
+  addMessage: (message) =>
+    set((state) => ({
+      messages: [...state.messages, message]
     })),
-    
-  clearMessages: () => 
+
+  addErrorMessage: (message) =>
+    set((state) => ({
+      errorMessages: [...state.errorMessages, message]
+    })),
+
+  clearMessages: () =>
     set({ messages: [] }),
+
+  clearErrorMessages: () =>
+    set({ errorMessages: [] }),
     
   setLoading: (loading) =>
     set({ isLoading: loading }),
+
+  setActiveChatTab: (tab) =>
+    set({ activeChatTab: tab }),
 
   startNewConversation: (accountId) => {
     const conversationId = `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
