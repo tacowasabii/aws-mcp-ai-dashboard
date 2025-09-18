@@ -87,10 +87,18 @@ export function AWSChat() {
       let messageContent = "";
       if (result.error) {
         // 에러가 있는 경우
-        messageContent = `❌ **오류 발생**\n\n${result.data || result.error}`;
+        const errorData = typeof result.data === 'string' ? result.data : JSON.stringify(result.data, null, 2);
+        const errorMsg = typeof result.error === 'string' ? result.error : JSON.stringify(result.error, null, 2);
+        messageContent = `❌ **오류 발생**\n\n${errorData || errorMsg}`;
       } else {
-        // 정상 응답인 경우
-        messageContent = result.data || "데이터를 조회할 수 없습니다";
+        // 정상 응답인 경우 - 객체인 경우 문자열로 변환
+        if (typeof result.data === 'string') {
+          messageContent = result.data;
+        } else if (typeof result.data === 'object' && result.data !== null) {
+          messageContent = JSON.stringify(result.data, null, 2);
+        } else {
+          messageContent = result.data || "데이터를 조회할 수 없습니다";
+        }
       }
 
       addMessage({

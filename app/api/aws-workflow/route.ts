@@ -64,72 +64,63 @@ export async function POST(request: NextRequest) {
       conversationPhase: "followup",
     });
 
-    // 작업계획서 생성 의도 감지 (간단한 키워드 기반)
-    const workPlanKeywords = [
-      "작업계획서",
-      "워크플로우",
-      "계획서",
-      "작업 계획",
-      "workflow",
-      "work plan",
-      "단계별",
-      "절차",
-      "cli 명령",
-      "aws cli",
-      "스크립트",
+    // AWS 리소스 조회가 필요한지 감지
+    const awsResourceKeywords = [
+      "조회",
+      // "rds", "데이터베이스", "database",
+      // "s3", "버킷", "bucket", "storage",
+      // "람다", "lambda", "function",
+      // "로드밸런서", "load balancer", "alb", "nlb", "elb",
+      // "보안그룹", "security group",
+      // "목록",
+      // "리스트",
+      // "list",
+      // "조회",
+      // "확인",
+      // "상태",
+      // "status",
+      // "describe",
     ];
 
-    const needsWorkPlan = workPlanKeywords.some((keyword) =>
+    const needsAWSResourceQuery = awsResourceKeywords.some((keyword) =>
       query.toLowerCase().includes(keyword.toLowerCase())
     );
 
-    // 컨텍스트가 포함된 프롬프트 생성
-    const contextualPrompt = await memory.getContextualPrompt(
-      accountId || "default",
-      query
+    console.log(`AWS 리소스 조회 필요: ${needsAWSResourceQuery}`);
+    console.log(
+      `감지된 키워드들:`,
+      awsResourceKeywords.filter((keyword) =>
+        query.toLowerCase().includes(keyword.toLowerCase())
+      )
     );
 
-    // AWS SDK + Bedrock LLM으로 리소스 조회
-    const awsClient = new AWSDirectClient(credentials);
-    const awsResponse = await awsClient.processQuery(contextualPrompt);
-
-    if (!awsResponse.success) {
-      throw new Error(awsResponse.error || "AWS 조회 실패");
-    }
-
+    let awsResponse: any = null;
     let workPlanResult: any = null;
     let usedN8nWebhook = false;
 
-    // 작업계획서가 필요한 경우 n8n 웹훅 호출
-    if (needsWorkPlan) {
-      console.log("📋 작업계획서 생성이 필요한 쿼리 감지됨");
+    // AWS 리소스 조회가 필요한 경우만 LLM+SDK 사용
+    if (needsAWSResourceQuery) {
+      console.log("🔍 AWS 리소스 조회를 위해 LLM+SDK 사용");
+
+      // 컨텍스트가 포함된 프롬프트 생성
+      const contextualPrompt = await memory.getContextualPrompt(
+        accountId || "default",
+        query
+      );
+
+      // AWS SDK + Bedrock LLM으로 리소스 조회
+      const awsClient = new AWSDirectClient(credentials);
+      awsResponse = await awsClient.processQuery(contextualPrompt);
+
+      if (!awsResponse.success) {
+        throw new Error(awsResponse.error || "AWS 조회 실패");
+      }
+    } else {
+      // AWS 리소스 조회가 필요하지 않은 경우 n8n 웹훅 호출
+      console.log("🤖 일반 쿼리로 n8n 워크플로우 호출");
 
       try {
-        // 리소스 타입 결정
-        let resourceType: "ec2" | "eks" | "vpc" | "general" = "general";
-        const queryLower = query.toLowerCase();
-
-        if (
-          queryLower.includes("ec2") ||
-          queryLower.includes("인스턴스") ||
-          queryLower.includes("서버")
-        ) {
-          resourceType = "ec2";
-        } else if (
-          queryLower.includes("eks") ||
-          queryLower.includes("클러스터") ||
-          queryLower.includes("쿠버네티스")
-        ) {
-          resourceType = "eks";
-        } else if (
-          queryLower.includes("vpc") ||
-          queryLower.includes("네트워크") ||
-          queryLower.includes("서브넷")
-        ) {
-          resourceType = "vpc";
-        }
-
-        // n8n 웹훅으로 작업계획서 생성 요청
+        // n8n 웹훅으로 일반 쿼리 처리 요청
         const webhookUrl =
           "http://localhost:5678/webhook/3c7a53f9-689e-4c4f-8cde-7cc487189bb4";
         const sessionId =
@@ -170,7 +161,7 @@ export async function POST(request: NextRequest) {
             workPlan: extractedContent,
           };
           usedN8nWebhook = true;
-          console.log("✅ n8n 웹훅 작업계획서 생성 완료");
+          console.log("✅ n8n 웹훅 처리 완료");
         } else {
           console.warn(
             "n8n 웹훅 실패:",
@@ -191,26 +182,32 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 성공한 대화를 메모리에 저장
-    await memory.addMessage(accountId || "default", query, awsResponse.data);
-
     // 응답 구성
-    const result: AWSWorkflowResponse = {
-      info: awsResponse.usedLLM
-        ? "✅ Bedrock LLM이 대화 맥락을 고려하여 AWS 데이터를 분석했습니다"
-        : "✅ AWS SDK를 통해 직접 조회되었습니다",
-    };
+    const result: AWSWorkflowResponse = {};
 
-    // 작업계획서가 생성된 경우 n8n 결과를 메인 응답으로 사용
-    if (usedN8nWebhook && workPlanResult?.success) {
+    if (needsAWSResourceQuery && awsResponse) {
+      // AWS 리소스 조회가 실행된 경우
+      await memory.addMessage(accountId || "default", query, awsResponse.data);
+
+      result.data = awsResponse.data;
+      result.info = awsResponse.usedLLM
+        ? "✅ Bedrock LLM이 대화 맥락을 고려하여 AWS 데이터를 분석했습니다"
+        : "✅ AWS SDK를 통해 직접 조회되었습니다";
+    } else if (usedN8nWebhook && workPlanResult?.success) {
+      // n8n 워크플로우가 실행된 경우
+      await memory.addMessage(
+        accountId || "default",
+        query,
+        workPlanResult.workPlan
+      );
+
       result.data = workPlanResult.workPlan;
       result.workPlan = workPlanResult.workPlan;
       result.usedN8nWebhook = true;
-      result.info =
-        "✅ n8n 워크플로우가 작업계획서를 생성했습니다";
+      result.info = "✅ n8n 워크플로우가 쿼리를 처리했습니다";
     } else {
-      // 작업계획서가 필요하지 않은 경우만 AWS 응답 사용
-      result.data = awsResponse.data;
+      // 실패한 경우
+      throw new Error("AWS 리소스 조회와 n8n 워크플로우 모두 실패했습니다");
     }
 
     return NextResponse.json(result);
