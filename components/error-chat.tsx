@@ -11,9 +11,10 @@ export function ErrorChat() {
     errorMessages,
     addErrorMessage,
     clearErrorMessages,
+    isErrorChatLoading,
+    setErrorChatLoading,
   } = useAppStore();
   const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const activeAccount = accounts.find((acc) => acc.id === activeAccountId);
@@ -26,7 +27,7 @@ export function ErrorChat() {
     e.preventDefault();
     if (!input.trim() || !activeAccount) return;
 
-    setIsLoading(true);
+    setErrorChatLoading(true);
 
     addErrorMessage({
       id: Date.now().toString(),
@@ -85,7 +86,7 @@ export function ErrorChat() {
         accountId: activeAccount.id,
       });
     } finally {
-      setIsLoading(false);
+      setErrorChatLoading(false);
     }
   };
 
@@ -152,7 +153,7 @@ export function ErrorChat() {
             </div>
           ))}
 
-          {isLoading && (
+          {isErrorChatLoading && (
             <div className="flex items-start gap-2 justify-start">
               <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center">
                 <Bot size={12} className="text-orange-600" />
@@ -191,14 +192,14 @@ export function ErrorChat() {
           onChange={(e) => setInput(e.target.value)}
           placeholder="에러 메시지나 문제 상황을 입력하세요..."
           className="flex-1 border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-          disabled={isLoading}
+          disabled={isErrorChatLoading}
         />
         <button
           type="submit"
-          disabled={isLoading || !input.trim()}
+          disabled={isErrorChatLoading || !input.trim()}
           className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
-          {isLoading ? (
+          {isErrorChatLoading ? (
             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
           ) : (
             <Send size={16} />

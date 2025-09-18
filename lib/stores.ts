@@ -31,6 +31,7 @@ interface AppState {
   messages: ChatMessage[]
   errorMessages: ChatMessage[]
   isLoading: boolean
+  isErrorChatLoading: boolean
   conversationSessions: Map<string, string> // accountId -> conversationId 매핑
   activeChatTab: 'workflow' | 'error'
 
@@ -45,6 +46,7 @@ interface AppState {
   clearMessages: () => void
   clearErrorMessages: () => void
   setLoading: (loading: boolean) => void
+  setErrorChatLoading: (loading: boolean) => void
   setActiveChatTab: (tab: 'workflow' | 'error') => void
   startNewConversation: (accountId: string) => string // 새 대화 세션 시작
   getConversationId: (accountId: string) => string | undefined
@@ -57,6 +59,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   messages: [],
   errorMessages: [],
   isLoading: false,
+  isErrorChatLoading: false,
   conversationSessions: new Map(),
   activeChatTab: 'workflow',
   
@@ -111,6 +114,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     
   setLoading: (loading) =>
     set({ isLoading: loading }),
+
+  setErrorChatLoading: (loading) =>
+    set({ isErrorChatLoading: loading }),
 
   setActiveChatTab: (tab) =>
     set({ activeChatTab: tab }),
