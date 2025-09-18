@@ -1,5 +1,5 @@
 {
-  "name": "CloudPlanner",
+  "name": "CreateWorkPlan",
   "nodes": [
     {
       "parameters": {
@@ -9,10 +9,10 @@
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
-        -144,
-        -112
+        -656,
+        720
       ],
-      "id": "1e408f76-58d2-47f3-96c6-3264beb2c242",
+      "id": "c4f73d63-67b4-4c59-805f-b92484968307",
       "name": "Structured Output Parser"
     },
     {
@@ -23,14 +23,14 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
       "typeVersion": 1,
       "position": [
-        -400,
-        -112
+        -912,
+        720
       ],
-      "id": "9ba3113c-e7db-41ad-8dec-3d8d48b0887c",
+      "id": "d681fd3d-28dd-45fb-8a9a-0c1a48bfbbcd",
       "name": "Azure OpenAI Chat Model",
       "credentials": {
         "azureOpenAiApi": {
-          "id": "DMm5Esu36TEk1HQz",
+          "id": "8QUXAAyJ7LIrc0ak",
           "name": "Azure Open AI account"
         }
       }
@@ -43,14 +43,14 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
       "typeVersion": 1,
       "position": [
-        -272,
-        288
+        -784,
+        1120
       ],
-      "id": "76cea115-38ae-4668-ae2d-6091b9cbb46c",
+      "id": "bccc87eb-4b03-4710-b2f6-8079ed176073",
       "name": "Azure OpenAI Chat Model1",
       "credentials": {
         "azureOpenAiApi": {
-          "id": "DMm5Esu36TEk1HQz",
+          "id": "8QUXAAyJ7LIrc0ak",
           "name": "Azure Open AI account"
         }
       }
@@ -64,43 +64,29 @@
       "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
       "typeVersion": 1.1,
       "position": [
-        -272,
-        -512
+        -560,
+        320
       ],
-      "id": "a40a4d74-b134-45c6-beaf-37df620dd1c7",
+      "id": "af317746-013c-4cd9-98ef-014ed49ba56e",
       "name": "AWSDOC"
-    },
-    {
-      "parameters": {
-        "endpointUrl": "https://mcp.context7.com/mcp",
-        "serverTransport": "httpStreamable",
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
-      "typeVersion": 1.1,
-      "position": [
-        -144,
-        -512
-      ],
-      "id": "355a8fef-9d7f-482d-8599-101b1817c3db",
-      "name": "Context7MCP"
     },
     {
       "parameters": {
         "promptType": "define",
         "text": "=<Instruction>\nYour primary responsibility is to create actionable, risk-aware work plans based on user input.\nIdentify and summarize all potential risks, version-specific changes, breaking changes, and interruption possibilities.\nReference authoritative documentation (AWS official docs, Context7 MCP) for every step; always provide source links.\nUse a command-oriented, concise tone throughout.\nBegin with a Table of Contents.\nNumber and title each stage clearly.\nDefine all script variables at the top.\nEmphasize commands using Markdown (**bold**/`inline code`).\nPresent scripts sequentially, one at a time.\nOutput must be in English.\nEnd the document immediately after the final stage/script, with no closing remarks or conclusions.\nWhen modifications are required, preserve original content and only apply minimal necessary changes.\nAlways refer to official documentation when new technologies are proposed.\n</Instruction>\n<Agent>\nYou are an Agent dedicated to producing precise, risk-focused cloud work plans.\nFor every user request, analyze and document all relevant risks, version changes, and interruption factors.\nLeverage AWS Knowledge MCP and Context7 MCP to ensure all guidance is authoritative and up-to-date.\nYour output must be clear, actionable, and enable safe execution by humans.\nInclude copy-paste-ready variables, sequential scripts, and source links for every referenced document.\nIf any required input is missing, request it at the end.\n</Agent>\n{{ $('Webhook').item.json.body.query }}",
         "options": {
-          "maxIterations": 7
+          "maxIterations": 15
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2.2,
       "position": [
-        -344,
-        -736
+        -848,
+        96
       ],
-      "id": "80cda2ee-5815-44df-81e2-671c09181405",
-      "name": "문서 조회"
+      "id": "6305c72f-16ef-4d1f-af0d-7e029f1cfcff",
+      "name": "문서 조회",
+      "alwaysOutputData": false
     },
     {
       "parameters": {
@@ -110,10 +96,10 @@
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
       "position": [
-        192,
-        -400
+        -48,
+        384
       ],
-      "id": "a9c77914-d99b-46cb-bb89-58f32ee47e8d",
+      "id": "37686a70-4644-41b2-849a-2cb14922610c",
       "name": "Simple Memory"
     },
     {
@@ -124,14 +110,14 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
       "typeVersion": 1,
       "position": [
-        72,
-        -408
+        -224,
+        384
       ],
-      "id": "e96f2ab0-7cce-4067-be35-f73e04f7c106",
+      "id": "e414fd09-250f-443b-8acc-eed0481821bc",
       "name": "Azure OpenAI Chat Model2",
       "credentials": {
         "azureOpenAiApi": {
-          "id": "DMm5Esu36TEk1HQz",
+          "id": "8QUXAAyJ7LIrc0ak",
           "name": "Azure Open AI account"
         }
       }
@@ -144,14 +130,14 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
       "typeVersion": 1,
       "position": [
-        -400,
-        -512
+        -912,
+        320
       ],
-      "id": "a169b763-fd8f-4400-b07d-5d5ae015ff8c",
+      "id": "04d99cef-0e5a-4b01-8f88-4c6565a20c91",
       "name": "Azure OpenAI Chat Model3",
       "credentials": {
         "azureOpenAiApi": {
-          "id": "DMm5Esu36TEk1HQz",
+          "id": "8QUXAAyJ7LIrc0ak",
           "name": "Azure Open AI account"
         }
       }
@@ -167,10 +153,10 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2.2,
       "position": [
-        -336,
-        64
+        -848,
+        896
       ],
-      "id": "53c6faaa-6754-40b4-b318-ab52b7f08377",
+      "id": "50a0ed86-d5b6-4b8f-856c-84e0b204b501",
       "name": "계획서 수정"
     },
     {
@@ -185,10 +171,10 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2.2,
       "position": [
-        -344,
-        -336
+        -848,
+        496
       ],
-      "id": "f867f219-caa9-4e4f-927b-c80590204fa2",
+      "id": "ea19ff52-0267-4643-b14d-129fa8626908",
       "name": "오류 해결"
     },
     {
@@ -199,10 +185,10 @@
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
       "position": [
-        -272,
-        -112
+        -784,
+        720
       ],
-      "id": "3e06f22e-9df0-4c1d-9939-fe3ecdf4b863",
+      "id": "18753955-a9a0-4fc8-8f7f-f27bd0a5f5a5",
       "name": "Simple Memory2"
     },
     {
@@ -214,10 +200,10 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2.2,
       "position": [
-        64,
-        -632
+        -224,
+        96
       ],
-      "id": "f5be0364-5715-45e3-82a0-f605a09aac2d",
+      "id": "379f598b-68a7-43b2-a746-d106ea835484",
       "name": "makeplan"
     },
     {
@@ -230,10 +216,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -1424,
-        -32
+        -1936,
+        800
       ],
-      "id": "cfe2624c-5d5d-4cce-9d86-ff0898cbb5b2",
+      "id": "4fb8b488-f3ba-4b8e-862a-fcb3db772f2c",
       "name": "Webhook",
       "webhookId": "3c7a53f9-689e-4c4f-8cde-7cc487189bb4"
     },
@@ -245,10 +231,10 @@
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
-        -1064,
-        192
+        -1568,
+        1024
       ],
-      "id": "34b54c86-6601-432c-bef9-2ca03cdc7254",
+      "id": "3e17b93b-ed23-4422-a1e8-84d104ab2ed4",
       "name": "Structured Output Parser1"
     },
     {
@@ -259,14 +245,14 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
       "typeVersion": 1,
       "position": [
-        -1192,
-        192
+        -1696,
+        1024
       ],
-      "id": "69dc437e-324d-4857-a952-b03f6f8d0e95",
+      "id": "681816e9-9bbe-4346-9bb9-e5ad87ad3133",
       "name": "Azure OpenAI Chat Model4",
       "credentials": {
         "azureOpenAiApi": {
-          "id": "DMm5Esu36TEk1HQz",
+          "id": "8QUXAAyJ7LIrc0ak",
           "name": "Azure Open AI account"
         }
       }
@@ -298,10 +284,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -848,
-        -32
+        -1360,
+        800
       ],
-      "id": "fda8cc54-ebe2-4804-850b-5ad804a9d3a7",
+      "id": "000c263c-5be2-4f1e-82ae-a5e6ce1a142f",
       "name": "If"
     },
     {
@@ -331,10 +317,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -624,
-        -432
+        -1136,
+        400
       ],
-      "id": "324ae12e-f46f-43ea-8f34-25907dc799f7",
+      "id": "8f6d5791-aa83-4492-a58e-8bd0eed81e4a",
       "name": "If1"
     },
     {
@@ -364,10 +350,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -624,
-        368
+        -1136,
+        1200
       ],
-      "id": "1f0bfdb0-2bdf-4209-8786-5f158e626f12",
+      "id": "6c63dd2f-d051-49ac-8ace-27078f77d232",
       "name": "If2"
     },
     {
@@ -379,10 +365,10 @@
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.7,
       "position": [
-        -344,
-        568
+        -848,
+        1408
       ],
-      "id": "351f96f3-714b-46f5-94c0-44f00ea956ab",
+      "id": "0477bf81-b3ee-4546-a858-9c79905a8686",
       "name": "Basic LLM Chain"
     },
     {
@@ -402,10 +388,10 @@
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.7,
       "position": [
-        -1200,
-        -32
+        -1712,
+        800
       ],
-      "id": "eb53da4a-b7b8-432e-b733-2436c3f09f8d",
+      "id": "e135411a-c267-4f7f-b155-4ec8cd85c6a7",
       "name": "Basic LLM Chain1"
     },
     {
@@ -416,14 +402,14 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
       "typeVersion": 1,
       "position": [
-        -272,
-        792
+        -784,
+        1632
       ],
-      "id": "5ce37bad-0904-4fa0-b76c-a429f8573cab",
+      "id": "536ad09b-6532-4180-b51c-ec830ea46850",
       "name": "Azure OpenAI Chat Model5",
       "credentials": {
         "azureOpenAiApi": {
-          "id": "DMm5Esu36TEk1HQz",
+          "id": "8QUXAAyJ7LIrc0ak",
           "name": "Azure Open AI account"
         }
       }
@@ -436,11 +422,100 @@
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
       "position": [
-        -192,
-        416
+        -704,
+        1248
       ],
-      "id": "16a85ca6-bf01-48c1-be21-3d6e851b1c9f",
+      "id": "4f606c05-a71b-400a-b212-11f8744eb78c",
       "name": "Simple Memory1"
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.output }}",
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"refs\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"title\": { \"type\": \"string\" },\n          \"link\": { \"type\": \"string\", \"format\": \"uri\" }\n        },\n        \"required\": [\"title\", \"link\"]\n      }\n    }\n  },\n  \"required\": [\"refs\"]\n}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        -512,
+        -192
+      ],
+      "id": "3d8ce853-ba3b-44da-8e9e-f2dc8a8a0406",
+      "name": "Information Extractor"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4.1",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -512,
+        0
+      ],
+      "id": "7d6b37e6-5374-433c-afb2-278d359f3cf1",
+      "name": "Azure OpenAI Chat Model6",
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "8QUXAAyJ7LIrc0ak",
+          "name": "Azure Open AI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        128,
+        -64
+      ],
+      "id": "7d924d83-525b-4220-ac9c-91b31f4b0fcf",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "endpointUrl": "https://mcp.context7.com/mcp",
+        "serverTransport": "httpStreamable",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.1,
+      "position": [
+        -704,
+        320
+      ],
+      "id": "d8cf8058-436b-432a-9be2-08240f8bf1c2",
+      "name": "Context7MCP"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6c751610-8f61-4663-8e1f-7920c1c3160b",
+              "name": "refs",
+              "value": "={{ $json.output.refs }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -160,
+        -192
+      ],
+      "id": "17e1d172-a62a-44b7-a365-09e950c7e3b3",
+      "name": "Edit Fields"
     }
   ],
   "pinData": {},
@@ -489,22 +564,16 @@
         ]
       ]
     },
-    "Context7MCP": {
-      "ai_tool": [
-        [
-          {
-            "node": "문서 조회",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "문서 조회": {
       "main": [
         [
           {
             "node": "makeplan",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Information Extractor",
             "type": "main",
             "index": 0
           }
@@ -544,16 +613,6 @@
         ]
       ]
     },
-    "오류 해결": {
-      "main": [
-        []
-      ]
-    },
-    "계획서 수정": {
-      "main": [
-        []
-      ]
-    },
     "Simple Memory2": {
       "ai_memory": [
         [
@@ -563,11 +622,6 @@
             "index": 0
           }
         ]
-      ]
-    },
-    "makeplan": {
-      "main": [
-        []
       ]
     },
     "Webhook": {
@@ -689,23 +743,78 @@
           }
         ]
       ]
+    },
+    "Azure OpenAI Chat Model6": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "makeplan": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Information Extractor": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Context7MCP": {
+      "ai_tool": [
+        [
+          {
+            "node": "문서 조회",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "d78d48ce-f3e2-43f9-9f06-ed13ac59d932",
+  "versionId": "ed40f317-a5a0-4871-8aa7-3d4d9149552f",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "ac20f92d18975045f55b1eb3a8bbd146a0c6ebd3fc31e377273aedc939f6b93b"
+    "instanceId": "e4da7f8c24b4f6392d42004ad7d9d94508aff8e37b44ed0fbd9e59c3aaa2d2fb"
   },
-  "id": "qpcjutI7NhA9ie04",
+  "id": "hDwIC2TphDpdnMRs",
   "tags": [
     {
-      "createdAt": "2025-09-18T07:09:25.267Z",
-      "updatedAt": "2025-09-18T07:09:25.267Z",
-      "id": "4qJ5w0ctL9p1tQyq",
+      "createdAt": "2025-09-18T13:13:38.350Z",
+      "updatedAt": "2025-09-18T13:13:38.350Z",
+      "id": "JoAOsVQ8mhesw8ie",
       "name": "prompthon"
     }
   ]
