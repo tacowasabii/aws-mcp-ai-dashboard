@@ -6,6 +6,7 @@ import { AddAccountModal } from "@/components/add-account-modal";
 import { AccountList } from "@/components/account-list";
 import { ConnectionStatus } from "@/components/connection-status";
 import { AWSChat } from "@/components/aws-chat";
+import { Terminal } from "@/components/terminal";
 import { Plus } from "lucide-react";
 
 export default function DashboardPage() {
@@ -72,6 +73,8 @@ export default function DashboardPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
+
+      <Terminal />
     </>
   );
 }

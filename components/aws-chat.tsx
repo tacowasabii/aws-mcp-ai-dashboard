@@ -6,7 +6,18 @@ import { Send, Bot, User, RotateCcw, MessageSquare, AlertTriangle } from 'lucide
 import { ErrorChat } from './error-chat'
 
 export function AWSChat() {
-  const { activeAccountId, accounts, messages, errorMessages, activeChatTab, addMessage, clearMessages, setActiveChatTab, startNewConversation, getConversationId } = useAppStore()
+  const {
+    activeAccountId,
+    accounts,
+    messages,
+    errorMessages,
+    activeChatTab,
+    addMessage,
+    clearMessages,
+    setActiveChatTab,
+    startNewConversation,
+    getConversationId
+  } = useAppStore()
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [loadingAccountId, setLoadingAccountId] = useState<string | null>(null)
@@ -164,9 +175,9 @@ export function AWSChat() {
           </div>
       
       {/* 채팅 메시지 영역 */}
-      <div 
+      <div
         className="flex-1 overflow-y-auto border rounded-lg p-4 bg-gray-50"
-        style={{maxHeight: 'calc(100vh - 20rem)', minHeight: '300px'}}
+        style={{ maxHeight: 'calc(100vh - 20rem)', minHeight: '300px' }}
       >
         <div className="space-y-3">
           {accountMessages.map((message) => (

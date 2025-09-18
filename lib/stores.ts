@@ -35,6 +35,10 @@ interface AppState {
   conversationSessions: Map<string, string> // accountId -> conversationId 매핑
   activeChatTab: 'workflow' | 'error'
 
+  // 터미널 상태
+  isTerminalOpen: boolean
+  isTerminalMinimized: boolean
+
   // 액션들
   addAccount: (account: AWSAccount) => void
   setActiveAccount: (accountId: string) => void
@@ -51,6 +55,10 @@ interface AppState {
   startNewConversation: (accountId: string) => string // 새 대화 세션 시작
   getConversationId: (accountId: string) => string | undefined
 
+  // 터미널 액션들
+  setTerminalOpen: (open: boolean) => void
+  setTerminalMinimized: (minimized: boolean) => void
+
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -62,6 +70,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   isErrorChatLoading: false,
   conversationSessions: new Map(),
   activeChatTab: 'workflow',
+
+  // 터미널 초기 상태
+  isTerminalOpen: false,
+  isTerminalMinimized: false,
   
   addAccount: (account) => 
     set((state) => {
@@ -136,6 +148,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   getConversationId: (accountId) => {
     return get().conversationSessions.get(accountId)
   },
+
+  // 터미널 액션 구현
+  setTerminalOpen: (open) =>
+    set({ isTerminalOpen: open }),
+
+  setTerminalMinimized: (minimized) =>
+    set({ isTerminalMinimized: minimized }),
 }))
 
 // 편의 함수들
