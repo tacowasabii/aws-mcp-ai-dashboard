@@ -5,7 +5,6 @@ import { getAWSMemory } from "@/lib/langchain-memory";
 
 interface AWSWorkflowResponse {
   data?: string;
-  workPlan?: string;
   error?: string;
   info?: string;
   usedN8nWebhook?: boolean;
@@ -148,12 +147,6 @@ export async function POST(request: NextRequest) {
           let extractedContent = "";
           if (webhookData.output) {
             extractedContent = webhookData.output;
-          } else if (webhookData.workPlan) {
-            extractedContent = webhookData.workPlan;
-          } else if (webhookData.response) {
-            extractedContent = webhookData.response;
-          } else {
-            extractedContent = JSON.stringify(webhookData);
           }
 
           workPlanResult = {
@@ -202,7 +195,6 @@ export async function POST(request: NextRequest) {
       );
 
       result.data = workPlanResult.workPlan;
-      result.workPlan = workPlanResult.workPlan;
       result.usedN8nWebhook = true;
       result.info = "✅ n8n 워크플로우가 쿼리를 처리했습니다";
     } else {
