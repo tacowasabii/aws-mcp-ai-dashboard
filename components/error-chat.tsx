@@ -6,7 +6,6 @@ import {
   RotateCcw,
   AlertTriangle,
   CheckCircle,
-  ExternalLink,
   Search,
 } from "lucide-react";
 import { supabase } from "@/utils/supabase";
@@ -133,11 +132,9 @@ export function ErrorChat() {
                     {solution.error_code || "에러 코드 없음"}
                   </h3>
                 </div>
-                <CheckCircle
-                  size={16}
-                  className="text-green-500"
-                  title="해결됨"
-                />
+                <div title="해결됨">
+                  <CheckCircle size={16} className="text-green-500" />
+                </div>
               </div>
 
               {/* 에러 설명 */}

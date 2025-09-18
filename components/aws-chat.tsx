@@ -21,13 +21,10 @@ export function AWSChat() {
     activeAccountId,
     accounts,
     messages,
-    errorMessages,
     activeChatTab,
     addMessage,
     clearMessages,
     setActiveChatTab,
-    startNewConversation,
-    getConversationId,
   } = useAppStore();
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -212,11 +209,6 @@ export function AWSChat() {
         >
           <AlertTriangle size={16} />
           에러 히스토리
-          {errorMessages.length > 0 && (
-            <span className="bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded-full">
-              {errorMessages.length}
-            </span>
-          )}
         </button>
       </div>
 
