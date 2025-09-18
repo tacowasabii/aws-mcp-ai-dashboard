@@ -1,9 +1,16 @@
-'use client'
+"use client";
 
-import { useState, useEffect, useRef } from 'react'
-import { useAppStore } from '@/lib/stores'
-import { Send, Bot, User, RotateCcw, MessageSquare, AlertTriangle } from 'lucide-react'
-import { ErrorChat } from './error-chat'
+import { useState, useEffect, useRef } from "react";
+import { useAppStore } from "@/lib/stores";
+import {
+  Send,
+  Bot,
+  User,
+  RotateCcw,
+  MessageSquare,
+  AlertTriangle,
+} from "lucide-react";
+import { ErrorChat } from "./error-chat";
 
 export function AWSChat() {
   const {
@@ -16,120 +23,122 @@ export function AWSChat() {
     clearMessages,
     setActiveChatTab,
     startNewConversation,
-    getConversationId
-  } = useAppStore()
-  const [input, setInput] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [loadingAccountId, setLoadingAccountId] = useState<string | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+    getConversationId,
+  } = useAppStore();
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingAccountId, setLoadingAccountId] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const activeAccount = accounts.find(acc => acc.id === activeAccountId)
-  const accountMessages = messages.filter(msg => msg.accountId === activeAccountId)
+  const activeAccount = accounts.find((acc) => acc.id === activeAccountId);
+  const accountMessages = messages.filter(
+    (msg) => msg.accountId === activeAccountId
+  );
 
   // 메시지 개수를 추적하여 실제로 메시지가 추가될 때만 스크롤
-  const [prevMessageCount, setPrevMessageCount] = useState(0)
+  const [prevMessageCount, setPrevMessageCount] = useState(0);
 
   useEffect(() => {
     if (accountMessages.length > prevMessageCount) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-    setPrevMessageCount(accountMessages.length)
-  }, [accountMessages.length, prevMessageCount])
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!input.trim() || !activeAccount) return
+    setPrevMessageCount(accountMessages.length);
+  }, [accountMessages.length, prevMessageCount]);
 
-    setIsLoading(true)
-    setLoadingAccountId(activeAccount.id)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || !activeAccount) return;
+
+    setIsLoading(true);
+    setLoadingAccountId(activeAccount.id);
 
     // 사용자 메시지 추가
     addMessage({
       id: Date.now().toString(),
-      type: 'user',
+      type: "user",
       content: input,
       timestamp: new Date(),
-      accountId: activeAccount.id
-    })
+      accountId: activeAccount.id,
+    });
 
     // 입력 필드 즉시 초기화
-    const currentInput = input
-    setInput('')
-    
+    const currentInput = input;
+    setInput("");
+
     try {
       // LLM + AWS MCP 시스템을 통한 자연어 쿼리 처리
-      const response = await fetch('/api/aws-query', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/aws-query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: currentInput,
           accountId: activeAccount.id,
           credentials: {
             accessKeyId: activeAccount.accessKeyId,
             secretAccessKey: activeAccount.secretAccessKey,
-            region: activeAccount.region
-          }
-        })
-      })
-      
-      const result = await response.json()
+            region: activeAccount.region,
+          },
+        }),
+      });
+
+      const result = await response.json();
 
       // 응답 내용 처리 (성공/에러 모두 처리)
-      let messageContent = ''
+      let messageContent = "";
       if (result.error) {
         // 에러가 있는 경우
-        messageContent = `❌ **오류 발생**\n\n${result.data || result.error}`
+        messageContent = `❌ **오류 발생**\n\n${result.data || result.error}`;
       } else {
         // 정상 응답인 경우
-        messageContent = result.data || '데이터를 조회할 수 없습니다'
+        messageContent = result.data || "데이터를 조회할 수 없습니다";
       }
 
       addMessage({
         id: (Date.now() + 1).toString(),
-        type: 'ai',
+        type: "ai",
         content: messageContent,
         timestamp: new Date(),
-        accountId: activeAccount.id
-      })
-
+        accountId: activeAccount.id,
+      });
     } catch (error) {
       // 네트워크 오류나 기타 예외 처리
-      const errorMessage = error instanceof Error
-        ? `❌ **연결 오류**\n\n${error.message}`
-        : '❌ **알 수 없는 오류가 발생했습니다**'
+      const errorMessage =
+        error instanceof Error
+          ? `❌ **연결 오류**\n\n${error.message}`
+          : "❌ **알 수 없는 오류가 발생했습니다**";
 
       addMessage({
         id: (Date.now() + 1).toString(),
-        type: 'ai',
+        type: "ai",
         content: errorMessage,
         timestamp: new Date(),
-        accountId: activeAccount.id
-      })
+        accountId: activeAccount.id,
+      });
     } finally {
-      setIsLoading(false)
-      setLoadingAccountId(null)
+      setIsLoading(false);
+      setLoadingAccountId(null);
     }
-  }
-  
+  };
+
   if (!activeAccount) {
     return (
       <div className="text-center py-4 text-gray-500">
         <Bot size={24} className="mx-auto mb-2" />
         <p>AWS 계정을 선택하세요</p>
       </div>
-    )
+    );
   }
-  
+
   return (
     <div className="flex flex-col h-full">
       {/* 탭 네비게이션 */}
       <div className="flex border-b mb-4">
         <button
-          onClick={() => setActiveChatTab('workflow')}
+          onClick={() => setActiveChatTab("workflow")}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-            activeChatTab === 'workflow'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+            activeChatTab === "workflow"
+              ? "border-blue-500 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700"
           }`}
         >
           <MessageSquare size={16} />
@@ -141,11 +150,11 @@ export function AWSChat() {
           )}
         </button>
         <button
-          onClick={() => setActiveChatTab('error')}
+          onClick={() => setActiveChatTab("error")}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-            activeChatTab === 'error'
-              ? 'border-orange-500 text-orange-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+            activeChatTab === "error"
+              ? "border-orange-500 text-orange-600"
+              : "border-transparent text-gray-500 hover:text-gray-700"
           }`}
         >
           <AlertTriangle size={16} />
@@ -158,7 +167,7 @@ export function AWSChat() {
         </button>
       </div>
 
-      {activeChatTab === 'error' ? (
+      {activeChatTab === "error" ? (
         <ErrorChat />
       ) : (
         <>
@@ -178,97 +187,102 @@ export function AWSChat() {
               </div>
             </div>
           </div>
-      
-      {/* 채팅 메시지 영역 */}
-      <div
-        className="flex-1 overflow-y-auto border rounded-lg p-4 bg-gray-50"
-        style={{ maxHeight: 'calc(100vh - 20rem)', minHeight: '300px' }}
-      >
-        <div className="space-y-3">
-          {accountMessages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex items-start gap-2 ${
-                message.type === 'user' ? 'justify-end' : 'justify-start'
-              }`}
+
+          {/* 채팅 메시지 영역 */}
+          <div
+            className="flex-1 overflow-y-auto border rounded-lg p-4 bg-gray-50"
+            style={{ maxHeight: "calc(100vh - 20rem)", minHeight: "300px" }}
+          >
+            <div className="space-y-3">
+              {accountMessages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex items-start gap-2 ${
+                    message.type === "user" ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  {message.type === "ai" && (
+                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                      <Bot size={12} className="text-blue-600" />
+                    </div>
+                  )}
+
+                  <div
+                    className={`max-w-md px-4 py-3 rounded-lg text-sm whitespace-pre-line ${
+                      message.type === "user"
+                        ? "bg-blue-600 text-white"
+                        : "bg-white text-gray-800 shadow-sm border"
+                    }`}
+                  >
+                    {message.content}
+                  </div>
+
+                  {message.type === "user" && (
+                    <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
+                      <User size={12} className="text-gray-600" />
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {/* AI 응답 로딩 상태 - 현재 활성 계정에서만 표시 */}
+              {isLoading && loadingAccountId === activeAccountId && (
+                <div className="flex items-start gap-2 justify-start">
+                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Bot size={12} className="text-blue-600" />
+                  </div>
+
+                  <div className="max-w-md px-4 py-3 rounded-lg text-sm bg-white text-gray-800 shadow-sm border">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                      <span className="ml-2 text-gray-500">
+                        AI가 답변을 생성중입니다...
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {accountMessages.length === 0 && (
+                <div className="text-center py-12 text-gray-500">
+                  <Bot size={32} className="mx-auto mb-4 text-gray-400" />
+                  <p className="text-lg mb-2">AWS 전문 어시스턴트</p>
+                  <p className="text-sm text-gray-400">
+                    Bedrock LLM이 AWS 전문가로서 답변합니다. EC2/EKS/VPC는
+                    실시간 데이터로, 다른 질문은 전문 지식으로 답변해드립니다.
+                  </p>
+                </div>
+              )}
+
+              {/* 스크롤 참조 */}
+              <div ref={messagesEndRef} />
+            </div>
+          </div>
+
+          {/* 입력 영역 */}
+          <form onSubmit={handleSubmit} className="flex gap-3 mt-4">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="AWS에 대해 무엇이든 질문하세요..."
+              className="flex-1 border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={isLoading}
+            />
+            <button
+              type="submit"
+              disabled={isLoading || !input.trim()}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              {message.type === 'ai' && (
-                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Bot size={12} className="text-blue-600" />
-                </div>
+              {isLoading ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Send size={16} />
               )}
-
-              <div
-                className={`max-w-md px-4 py-3 rounded-lg text-sm whitespace-pre-line ${
-                  message.type === 'user'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-800 shadow-sm border'
-                }`}
-              >
-                {message.content}
-              </div>
-
-              {message.type === 'user' && (
-                <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
-                  <User size={12} className="text-gray-600" />
-                </div>
-              )}
-            </div>
-          ))}
-
-          {/* AI 응답 로딩 상태 - 현재 활성 계정에서만 표시 */}
-          {isLoading && loadingAccountId === activeAccountId && (
-            <div className="flex items-start gap-2 justify-start">
-              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                <Bot size={12} className="text-blue-600" />
-              </div>
-
-              <div className="max-w-md px-4 py-3 rounded-lg text-sm bg-white text-gray-800 shadow-sm border">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
-                  <span className="ml-2 text-gray-500">AI가 답변을 생성중입니다...</span>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {accountMessages.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
-              <Bot size={32} className="mx-auto mb-4 text-gray-400" />
-              <p className="text-lg mb-2">AWS 전문 어시스턴트</p>
-              <p className="text-sm text-gray-400">Bedrock LLM이 AWS 전문가로서 답변합니다. EC2/EKS/VPC는 실시간 데이터로, 다른 질문은 전문 지식으로 답변해드립니다.</p>
-            </div>
-          )}
-          
-          {/* 스크롤 참조 */}
-          <div ref={messagesEndRef} />
-        </div>
-      </div>
-      
-      {/* 입력 영역 */}
-      <form onSubmit={handleSubmit} className="flex gap-3 mt-4">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="AWS에 대해 무엇이든 질문하세요..."
-          className="flex-1 border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          disabled={isLoading}
-        />
-        <button
-          type="submit"
-          disabled={isLoading || !input.trim()}
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-        >
-          {isLoading ? (
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <Send size={16} />
-          )}
-        </button>
-      </form>
+            </button>
+          </form>
         </>
       )}
     </div>
-  )
+  );
 }
