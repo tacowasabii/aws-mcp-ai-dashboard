@@ -2,12 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAppStore } from "@/lib/stores";
-import {
-  RotateCcw,
-  AlertTriangle,
-  CheckCircle,
-  Search,
-} from "lucide-react";
+import { RotateCcw, AlertTriangle, CheckCircle, Search } from "lucide-react";
 import { supabase } from "@/utils/supabase";
 
 interface ErrorSolution {
@@ -110,7 +105,7 @@ export function ErrorChat() {
         {isLoading ? (
           <div className="text-center py-12">
             <div className="w-8 h-8 border-2 border-orange-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-500">에러 해결책을 불러오는 중...</p>
+            <p className="text-gray-500">에러 히스토리를 불러오는 중...</p>
           </div>
         ) : filteredSolutions.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
