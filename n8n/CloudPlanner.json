@@ -1,0 +1,430 @@
+{
+  "name": "CloudPlanner",
+  "nodes": [
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "={\n  \"type\":\"object\",\n  \"properties\":{\n    \"output\":{\n      \"type\":\"object\",\n      \"properties\":{\n        \"error\":{\n          \"type\":\"object\",\n            \"properties\":{\n              \"error_code\":{\"type\":\"string\"},\n              \"error_description\":{\"type\":\"string\"},\n              \"original_command\":{\"type\":\"string\"},\n              \"fixed_command\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\n              \"explanation\":{\"type\":\"string\"},\n              \"related_documentation\":{\n                \"type\":\"array\",\n                \"items\":{\"type\":\"string\"}\n              }\n            }\n        },\n        \"plan\":{\"type\":\"string\"}\n      }\n    }\n  }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -448,
+        88
+      ],
+      "id": "1e408f76-58d2-47f3-96c6-3264beb2c242",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4.1",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -704,
+        88
+      ],
+      "id": "9ba3113c-e7db-41ad-8dec-3d8d48b0887c",
+      "name": "Azure OpenAI Chat Model",
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "DMm5Esu36TEk1HQz",
+          "name": "Azure Open AI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "gpt-4.1",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -168,
+        88
+      ],
+      "id": "76cea115-38ae-4668-ae2d-6091b9cbb46c",
+      "name": "Azure OpenAI Chat Model1",
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "DMm5Esu36TEk1HQz",
+          "name": "Azure Open AI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "endpointUrl": "https://knowledge-mcp.global.api.aws",
+        "serverTransport": "httpStreamable",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.1,
+      "position": [
+        -576,
+        -448
+      ],
+      "id": "a40a4d74-b134-45c6-beaf-37df620dd1c7",
+      "name": "AWSDOC"
+    },
+    {
+      "parameters": {
+        "endpointUrl": "https://mcp.context7.com/mcp",
+        "serverTransport": "httpStreamable",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.1,
+      "position": [
+        -448,
+        -448
+      ],
+      "id": "355a8fef-9d7f-482d-8599-101b1817c3db",
+      "name": "Context7MCP"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=<Instruction>\nYour primary responsibility is to create actionable, risk-aware work plans based on user input.\nIdentify and summarize all potential risks, version-specific changes, breaking changes, and interruption possibilities.\nReference authoritative documentation (AWS official docs, Context7 MCP) for every step; always provide source links.\nUse a command-oriented, concise tone throughout.\nBegin with a Table of Contents.\nNumber and title each stage clearly.\nDefine all script variables at the top.\nEmphasize commands using Markdown (**bold**/`inline code`).\nPresent scripts sequentially, one at a time.\nOutput must be in English.\nEnd the document immediately after the final stage/script, with no closing remarks or conclusions.\nWhen modifications are required, preserve original content and only apply minimal necessary changes.\nAlways refer to official documentation when new technologies are proposed.\n</Instruction>\n<Agent>\nYou are an Agent dedicated to producing precise, risk-focused cloud work plans.\nFor every user request, analyze and document all relevant risks, version changes, and interruption factors.\nLeverage AWS Knowledge MCP and Context7 MCP to ensure all guidance is authoritative and up-to-date.\nYour output must be clear, actionable, and enable safe execution by humans.\nInclude copy-paste-ready variables, sequential scripts, and source links for every referenced document.\nIf any required input is missing, request it at the end.\n</Agent>\n{{ $json.body.query }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -648,
+        -672
+      ],
+      "id": "80cda2ee-5815-44df-81e2-671c09181405",
+      "name": "문서 조회"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('WorkPlan').item.json.body.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -104,
+        -448
+      ],
+      "id": "a9c77914-d99b-46cb-bb89-58f32ee47e8d",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4.1",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -232,
+        -448
+      ],
+      "id": "e96f2ab0-7cce-4067-be35-f73e04f7c106",
+      "name": "Azure OpenAI Chat Model2",
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "DMm5Esu36TEk1HQz",
+          "name": "Azure Open AI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "gpt-4.1",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -704,
+        -448
+      ],
+      "id": "a169b763-fd8f-4400-b07d-5d5ae015ff8c",
+      "name": "Azure OpenAI Chat Model3",
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "DMm5Esu36TEk1HQz",
+          "name": "Azure Open AI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=에러가 발생한 명령어:\n{{ $json.output.error.original_command }}\n\n에러 메세지:\n{{ $json.output.error.error_code }}\n{{ $json.output.error.error_description }}\n\n에러를 해결한 명령어:\n{{ $json.output.error.fixed_command }}\n\n기존 작업 계획서:\n{{ $node[\"makeplan\"] }}",
+        "options": {
+          "systemMessage": "당신의 업무는 클라우드 리소스 작업 계획서를 수정하는 일입니다. 기존의 작업 계획서와 발생한 오류 명령어, 해결 방안을 보고 작업 계획서를 수정하세요. 수정할 때는 에러가 발생한 명령어만 수정하고 다른 내용은 절대 건들지 마세요. 답변은 수정된 작업 계획서 내용만 출력해주세요."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -240,
+        -136
+      ],
+      "id": "53c6faaa-6754-40b4-b318-ab52b7f08377",
+      "name": "계획서 수정"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.query }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=당신은 AWS CLI 명령어 오류를 해결하고, 오류 해결 정보를 구조화된 JSON 형태로 출력하는 AI 에이전트입니다.\n사용자가 입력한 AWS CLI 명령어와 에러 메시지를 기반으로 오류 원인을 분석하고, 해결을 위한 정확한 명령어를 제시하며, RAG에 사용할 수 있는 구조화된 데이터를 생성해야 합니다.\n사용자는 다음 두 가지를 입력합니다\n- CLI 명령어: original_command\n- 에러 메시지: error_description"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -648,
+        -136
+      ],
+      "id": "f867f219-caa9-4e4f-927b-c80590204fa2",
+      "name": "오류 해결"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Error').item.json.body.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -576,
+        88
+      ],
+      "id": "3e06f22e-9df0-4c1d-9939-fe3ecdf4b863",
+      "name": "Simple Memory2"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "b92bb8d5-9bf7-4172-80d0-086aac9b51f0/workplan",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -928,
+        -568
+      ],
+      "id": "54f30a4b-723a-40ff-bd04-eb18662a6cfe",
+      "name": "WorkPlan",
+      "webhookId": "b92bb8d5-9bf7-4172-80d0-086aac9b51f0"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "b92bb8d5-9bf7-4172-80d0-086aac9b51f0/error",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -928,
+        -136
+      ],
+      "id": "dd1ed161-3161-4984-8364-c275b544fcd3",
+      "name": "Error",
+      "webhookId": "b92bb8d5-9bf7-4172-80d0-086aac9b51f0"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=<Instruction>\nCreate a work plan based on the user’s input.\nUse a formal, concise tone.\nMake it command-oriented; give brief explanations.\nOutput as a Markdown document, but never starts with \"```markdown\".\nInclude a Table of Contents at the top.\nStructure clear, numbered stages with headings.\nDefine all script variables at the very top.\nEmphasize commands with Markdown (**bold**/`inline code`); avoid the “A: b” style.\nEnsure variables and scripts are copy-paste ready.\nPresent scripts one at a time (sequential).\nFinal output language must be Korean.\nEnd the document without any closing remark; no conclusions or sign-offs. The document must end immediately after the final stage/script.\n</instruction>\n<Agent> An Agent that authors precise cloud change execution plans using AWS CLI and shell scripts. It leverages context7 for runtime context retrieval and aws knowledge mcp for authoritative AWS guidance. The plan must clearly convey intent and end-to-end flow so a human can execute safely and trace decisions. It outputs formal Markdown with copy-paste-ready variables and sequential scripts, requesting any missing inputs at the end. </Agent>\nUser: {{ $('WorkPlan').item.json.body.query }}\nDocs: {{ $json.output }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -240,
+        -672
+      ],
+      "id": "f5be0364-5715-45e3-82a0-f605a09aac2d",
+      "name": "makeplan"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "오류 해결",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Azure OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "오류 해결",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Azure OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "계획서 수정",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AWSDOC": {
+      "ai_tool": [
+        [
+          {
+            "node": "문서 조회",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Context7MCP": {
+      "ai_tool": [
+        [
+          {
+            "node": "문서 조회",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "문서 조회": {
+      "main": [
+        [
+          {
+            "node": "makeplan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "makeplan",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Azure OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "makeplan",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Azure OpenAI Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "문서 조회",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "오류 해결": {
+      "main": [
+        [
+          {
+            "node": "계획서 수정",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "계획서 수정": {
+      "main": [
+        []
+      ]
+    },
+    "Simple Memory2": {
+      "ai_memory": [
+        [
+          {
+            "node": "오류 해결",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WorkPlan": {
+      "main": [
+        [
+          {
+            "node": "문서 조회",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error": {
+      "main": [
+        [
+          {
+            "node": "오류 해결",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "makeplan": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "561cd74d-c88c-4794-9bbb-6432b6e03608",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ac20f92d18975045f55b1eb3a8bbd146a0c6ebd3fc31e377273aedc939f6b93b"
+  },
+  "id": "qpcjutI7NhA9ie04",
+  "tags": [
+    {
+      "createdAt": "2025-09-18T07:09:25.267Z",
+      "updatedAt": "2025-09-18T07:09:25.267Z",
+      "id": "4qJ5w0ctL9p1tQyq",
+      "name": "prompthon"
+    }
+  ]
+}
