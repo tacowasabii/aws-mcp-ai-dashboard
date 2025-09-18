@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useAppStore } from '@/lib/stores'
-import { Send, Bot, User } from 'lucide-react'
+import { Send, Bot, User, RotateCcw } from 'lucide-react'
 
 export function AWSChat() {
-  const { activeAccountId, accounts, messages, addMessage, startNewConversation, getConversationId } = useAppStore()
+  const { activeAccountId, accounts, messages, addMessage, clearMessages, startNewConversation, getConversationId } = useAppStore()
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [loadingAccountId, setLoadingAccountId] = useState<string | null>(null)
@@ -109,7 +109,16 @@ export function AWSChat() {
       <div className="text-xs text-gray-500 border-b pb-2 mb-4">
         <div className="flex justify-between items-center">
           <span>🤖 Bedrock LLM + AWS SDK</span>
-          <span>{activeAccount.region}</span>
+          <div className="flex items-center gap-2">
+            <span>{activeAccount.region}</span>
+            <button
+              onClick={() => clearMessages()}
+              className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+              title="채팅 기록 초기화"
+            >
+              <RotateCcw size={14} className="text-gray-400" />
+            </button>
+          </div>
         </div>
       </div>
       
