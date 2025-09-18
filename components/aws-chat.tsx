@@ -9,6 +9,8 @@ import {
   RotateCcw,
   MessageSquare,
   AlertTriangle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { ErrorChat } from "./error-chat";
 
@@ -28,6 +30,7 @@ export function AWSChat() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loadingAccountId, setLoadingAccountId] = useState<string | null>(null);
+  const [expandedRefs, setExpandedRefs] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const activeAccount = accounts.find((acc) => acc.id === activeAccountId);
@@ -44,6 +47,18 @@ export function AWSChat() {
     }
     setPrevMessageCount(accountMessages.length);
   }, [accountMessages.length, prevMessageCount]);
+
+  const toggleRefsExpansion = (messageId: string) => {
+    setExpandedRefs(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(messageId)) {
+        newSet.delete(messageId);
+      } else {
+        newSet.add(messageId);
+      }
+      return newSet;
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,14 +102,20 @@ export function AWSChat() {
       let messageContent = "";
       if (result.error) {
         // 에러가 있는 경우
-        const errorData = typeof result.data === 'string' ? result.data : JSON.stringify(result.data, null, 2);
-        const errorMsg = typeof result.error === 'string' ? result.error : JSON.stringify(result.error, null, 2);
+        const errorData =
+          typeof result.data === "string"
+            ? result.data
+            : JSON.stringify(result.data, null, 2);
+        const errorMsg =
+          typeof result.error === "string"
+            ? result.error
+            : JSON.stringify(result.error, null, 2);
         messageContent = `❌ **오류 발생**\n\n${errorData || errorMsg}`;
       } else {
         // 정상 응답인 경우 - 객체인 경우 문자열로 변환
-        if (typeof result.data === 'string') {
+        if (typeof result.data === "string") {
           messageContent = result.data;
-        } else if (typeof result.data === 'object' && result.data !== null) {
+        } else if (typeof result.data === "object" && result.data !== null) {
           messageContent = JSON.stringify(result.data, null, 2);
         } else {
           messageContent = result.data || "데이터를 조회할 수 없습니다";
@@ -107,6 +128,7 @@ export function AWSChat() {
         content: messageContent,
         timestamp: new Date(),
         accountId: activeAccount.id,
+        refs: result.refs || undefined, // refs 데이터 추가
       });
     } catch (error) {
       // 네트워크 오류나 기타 예외 처리
@@ -215,14 +237,62 @@ export function AWSChat() {
                     </div>
                   )}
 
-                  <div
-                    className={`max-w-md px-4 py-3 rounded-lg text-sm whitespace-pre-line ${
-                      message.type === "user"
-                        ? "bg-blue-600 text-white"
-                        : "bg-white text-gray-800 shadow-sm border"
-                    }`}
-                  >
-                    {message.content}
+                  <div className="flex flex-col gap-2">
+                    <div
+                      className={`max-w-md px-4 py-3 rounded-lg text-sm whitespace-pre-line ${
+                        message.type === "user"
+                          ? "bg-blue-600 text-white"
+                          : "bg-white text-gray-800 shadow-sm border"
+                      }`}
+                    >
+                      {message.content}
+                    </div>
+
+                    {/* refs가 있는 경우 참조 링크 박스 표시 (AI 메시지에만) */}
+                    {message.type === "ai" &&
+                      message.refs &&
+                      message.refs.length > 0 && (
+                        <div className="max-w-md">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="text-xs text-gray-500">📖 레퍼런스</div>
+                            {message.refs.length > 2 && (
+                              <button
+                                onClick={() => toggleRefsExpansion(message.id)}
+                                className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                              >
+                                {expandedRefs.has(message.id) ? (
+                                  <>
+                                    접기 <ChevronUp size={12} />
+                                  </>
+                                ) : (
+                                  <>
+                                    펼쳐보기 <ChevronDown size={12} />
+                                  </>
+                                )}
+                              </button>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {(expandedRefs.has(message.id) ? message.refs : message.refs.slice(0, 2)).map((ref, index) => (
+                              <a
+                                key={index}
+                                href={ref.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-block px-2 py-1 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded text-xs text-blue-700 hover:text-blue-800 transition-colors duration-200"
+                                title={ref.link}
+                              >
+                                {ref.title}
+                              </a>
+                            ))}
+                            {!expandedRefs.has(message.id) && message.refs.length > 2 && (
+                              <span className="inline-block px-2 py-1 text-xs text-gray-500">
+                                +{message.refs.length - 2}개 더
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                   </div>
 
                   {message.type === "user" && (

@@ -19,6 +19,10 @@ export interface ChatMessage {
   timestamp: Date
   accountId?: string
   conversationId?: string // 대화 세션 ID 추가
+  refs?: Array<{
+    title: string
+    link: string
+  }> // n8n 응답의 참조 링크들
 }
 
 

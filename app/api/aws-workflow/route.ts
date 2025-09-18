@@ -8,6 +8,10 @@ interface AWSWorkflowResponse {
   error?: string;
   info?: string;
   usedN8nWebhook?: boolean;
+  refs?: Array<{
+    title: string;
+    link: string;
+  }>;
 }
 
 export async function POST(request: NextRequest) {
@@ -145,13 +149,22 @@ export async function POST(request: NextRequest) {
 
           // n8n 응답에서 실제 내용 추출
           let extractedContent = "";
+          let extractedRefs = null;
+
           if (webhookData.output) {
             extractedContent = webhookData.output;
+            console.log(webhookData);
+          }
+
+          // refs 데이터가 있는 경우 추출
+          if (webhookData.refs && Array.isArray(webhookData.refs)) {
+            extractedRefs = webhookData.refs;
           }
 
           workPlanResult = {
             success: true,
             workPlan: extractedContent,
+            refs: extractedRefs,
           };
           usedN8nWebhook = true;
           console.log("✅ n8n 웹훅 처리 완료");
@@ -197,6 +210,11 @@ export async function POST(request: NextRequest) {
       result.data = workPlanResult.workPlan;
       result.usedN8nWebhook = true;
       result.info = "✅ n8n 워크플로우가 쿼리를 처리했습니다";
+
+      // refs 데이터가 있는 경우 포함
+      if (workPlanResult.refs) {
+        result.refs = workPlanResult.refs;
+      }
     } else {
       // 실패한 경우
       throw new Error("AWS 리소스 조회와 n8n 워크플로우 모두 실패했습니다");
