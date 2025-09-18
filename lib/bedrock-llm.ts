@@ -1,4 +1,5 @@
 import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime'
+import { AzureAgentClient, WorkPlanRequest, getAzureAgentConfig } from './azure-agent-client'
 
 export interface BedrockLLMConfig {
   region: string
@@ -17,6 +18,7 @@ export interface LLMResponse {
 export class BedrockLLMClient {
   private client: BedrockRuntimeClient
   private modelId: string
+  private azureAgent: AzureAgentClient | null = null
 
   constructor(config: BedrockLLMConfig) {
     this.client = new BedrockRuntimeClient({
@@ -27,16 +29,94 @@ export class BedrockLLMClient {
       }
     })
     this.modelId = config.modelId
+    
+    // Azure Agent 초기화
+    const azureConfig = getAzureAgentConfig()
+    if (azureConfig) {
+      this.azureAgent = new AzureAgentClient(azureConfig)
+    }
   }
 
   /**
-   * AWS 전문가로서 질문에 답변 (실제 AWS 데이터 포함)
+   * 사용자 쿼리에서 작업계획서 생성 의도 파악
+   */
+  private detectWorkPlanIntent(query: string): boolean {
+    const workPlanKeywords = [
+      '작업계획서', '워크플로우', '계획서', '작업 계획', 
+      'workflow', 'work plan', '단계별', '절차', 
+      'cli 명령', 'aws cli', '스크립트'
+    ];
+    
+    const queryLower = query.toLowerCase();
+    return workPlanKeywords.some(keyword => queryLower.includes(keyword.toLowerCase()));
+  }
+
+  /**
+   * 리소스 타입 추출
+   */
+  private extractResourceType(query: string, awsData?: any): 'ec2' | 'eks' | 'vpc' | 'general' {
+    const queryLower = query.toLowerCase();
+    
+    if ((queryLower.includes('ec2') || queryLower.includes('인스턴스') || queryLower.includes('서버')) && awsData) {
+      return 'ec2';
+    }
+    if ((queryLower.includes('eks') || queryLower.includes('클러스터') || queryLower.includes('쿠버네티스')) && awsData) {
+      return 'eks';
+    }
+    if ((queryLower.includes('vpc') || queryLower.includes('네트워크') || queryLower.includes('서브넷')) && awsData) {
+      return 'vpc';
+    }
+    
+    return 'general';
+  }
+
+  /**
+   * AWS 전문가로서 질문에 답변 (실제 AWS 데이터 포함) + 작업계획서 생성
    */
   async answerWithAWSData(
     query: string,
     userRegion: string,
     awsData?: any
   ): Promise<LLMResponse> {
+    // 작업계획서 생성 의도 확인
+    if (this.detectWorkPlanIntent(query) && this.azureAgent) {
+      console.log('🎯 작업계획서 생성 의도 감지됨, Azure Agent 호출...');
+      
+      try {
+        const resourceType = this.extractResourceType(query, awsData);
+        
+        const workPlanRequest: WorkPlanRequest = {
+          resourceType,
+          resourceInfo: awsData || {},
+          userRequest: query,
+          awsRegion: userRegion
+        };
+        
+        const workPlanResult = await this.azureAgent.generateWorkPlan(workPlanRequest);
+        
+        if (workPlanResult.success) {
+          const combinedResponse = `📋 **작업계획서 생성 완료**
+
+${workPlanResult.workPlan}
+
+---
+
+🤖 *Azure AI Agent가 생성한 작업계획서입니다.*
+*Thread ID: ${workPlanResult.threadId}*`;
+          
+          return {
+            success: true,
+            answer: combinedResponse
+          };
+        } else {
+          console.warn('Azure Agent 실패, 일반 LLM 응답으로 폴백:', workPlanResult.error);
+          // 폴백: 일반 LLM 응답
+        }
+      } catch (error: any) {
+        console.warn('Azure Agent 오류, 일반 LLM 응답으로 폴백:', error);
+        // 폴백: 일반 LLM 응답
+      }
+    }
     const systemPrompt = `당신은 AWS 전문 어시스턴트입니다. 사용자의 질문에 대해 도움이 되는 답변을 제공하세요.
 
 역할:
@@ -192,21 +272,51 @@ export class BedrockLLMClient {
       if (queryLower.includes('ec2') || queryLower.includes('인스턴스')) {
         return {
           success: true,
-          answer: `🖥️ **EC2 인스턴스 분석** (시뮬레이션)\n\n${userRegion} 리전의 EC2 인스턴스 현황을 분석했습니다.\n\n${JSON.stringify(awsData, null, 2)}\n\n**권장사항:**\n- 사용하지 않는 인스턴스는 중지하여 비용을 절약하세요\n- 적절한 인스턴스 타입을 선택하여 성능을 최적화하세요\n\n*실제 Bedrock 연결 후 더 상세한 분석이 제공됩니다.*`
+          answer: `🖥️ **EC2 인스턴스 분석** (시뮬레이션)
+
+${userRegion} 리전의 EC2 인스턴스 현황을 분석했습니다.
+
+${JSON.stringify(awsData, null, 2)}
+
+**권장사항:**
+- 사용하지 않는 인스턴스는 중지하여 비용을 절약하세요
+- 적절한 인스턴스 타입을 선택하여 성능을 최적화하세요
+
+*실제 Bedrock 연결 후 더 상세한 분석이 제공됩니다.*`
         }
       }
 
       if (queryLower.includes('eks') || queryLower.includes('클러스터')) {
         return {
           success: true,
-          answer: `⚓ **EKS 클러스터 분석** (시뮬레이션)\n\n${userRegion} 리전의 EKS 클러스터 현황을 분석했습니다.\n\n${JSON.stringify(awsData, null, 2)}\n\n**권장사항:**\n- 클러스터 버전을 최신으로 유지하세요\n- 적절한 노드 그룹 설정을 확인하세요\n\n*실제 Bedrock 연결 후 더 상세한 분석이 제공됩니다.*`
+          answer: `⚓ **EKS 클러스터 분석** (시뮬레이션)
+
+${userRegion} 리전의 EKS 클러스터 현황을 분석했습니다.
+
+${JSON.stringify(awsData, null, 2)}
+
+**권장사항:**
+- 클러스터 버전을 최신으로 유지하세요
+- 적절한 노드 그룹 설정을 확인하세요
+
+*실제 Bedrock 연결 후 더 상세한 분석이 제공됩니다.*`
         }
       }
 
       if (queryLower.includes('vpc') || queryLower.includes('네트워크')) {
         return {
           success: true,
-          answer: `🌐 **VPC 네트워크 분석** (시뮬레이션)\n\n${userRegion} 리전의 VPC 네트워크 현황을 분석했습니다.\n\n${JSON.stringify(awsData, null, 2)}\n\n**권장사항:**\n- 보안 그룹 설정을 정기적으로 검토하세요\n- 서브넷 구성이 적절한지 확인하세요\n\n*실제 Bedrock 연결 후 더 상세한 분석이 제공됩니다.*`
+          answer: `🌐 **VPC 네트워크 분석** (시뮬레이션)
+
+${userRegion} 리전의 VPC 네트워크 현황을 분석했습니다.
+
+${JSON.stringify(awsData, null, 2)}
+
+**권장사항:**
+- 보안 그룹 설정을 정기적으로 검토하세요
+- 서브넷 구성이 적절한지 확인하세요
+
+*실제 Bedrock 연결 후 더 상세한 분석이 제공됩니다.*`
         }
       }
     }
@@ -214,7 +324,25 @@ export class BedrockLLMClient {
     // 일반적인 AWS 질문
     return {
       success: true,
-      answer: `☁️ **AWS 전문 상담** (시뮬레이션)\n\n질문: "${query}"\n\n**현재 구성:**\n- 리전: ${userRegion}\n- 지원 서비스: EC2, EKS, VPC (실시간 데이터)\n\n**답변:**\nAWS에 대한 질문을 해주셔서 감사합니다. 현재 시뮬레이션 모드로 동작 중입니다.\n\nEC2, EKS, VPC에 대한 구체적인 질문을 하시면 실제 AWS 데이터를 조회하여 상세한 분석을 제공해드릴 수 있습니다.\n\n**예시 질문:**\n- "EC2 인스턴스 현황 보여줘"\n- "EKS 클러스터 상태 확인해줘"\n- "VPC 네트워크 구성 분석해줘"\n\n*실제 Bedrock 연결 후 모든 AWS 서비스에 대한 전문적인 답변이 제공됩니다.*`
+      answer: `☁️ **AWS 전문 상담** (시뮬레이션)
+
+질문: "${query}"
+
+**현재 구성:**
+- 리전: ${userRegion}
+- 지원 서비스: EC2, EKS, VPC (실시간 데이터)
+
+**답변:**
+AWS에 대한 질문을 해주셔서 감사합니다. 현재 시뮬레이션 모드로 동작 중입니다.
+
+EC2, EKS, VPC에 대한 구체적인 질문을 하시면 실제 AWS 데이터를 조회하여 상세한 분석을 제공해드릴 수 있습니다.
+
+**예시 질문:**
+- "EC2 인스턴스 현황 보여줘"
+- "EKS 클러스터 상태 확인해줘"
+- "VPC 네트워크 구성 분석해줘"
+
+*실제 Bedrock 연결 후 모든 AWS 서비스에 대한 전문적인 답변이 제공됩니다.*`
     }
   }
 
@@ -229,21 +357,59 @@ export class BedrockLLMClient {
 
       return {
         success: true,
-        answer: `🔍 **문제 원인** (시뮬레이션 분석)\n\n현재 AWS 계정에 **${action}** 권한이 없습니다.\n\n💡 **해결 방법**\n1. AWS IAM 콘솔에서 사용자 권한 확인\n2. 관리자에게 **${action}** 권한 요청\n3. 정책에서 명시적 거부(Deny) 규칙 확인\n\n📋 **추가 정보**\n리전: ${userRegion}\n필요 권한: ${action}\n\n*실제 Bedrock LLM 연결 시 더 상세한 분석과 해결책을 제공합니다.*`
+        answer: `🔍 **문제 원인** (시뮬레이션 분석)
+
+현재 AWS 계정에 **${action}** 권한이 없습니다.
+
+💡 **해결 방법**
+1. AWS IAM 콘솔에서 사용자 권한 확인
+2. 관리자에게 **${action}** 권한 요청
+3. 정책에서 명시적 거부(Deny) 규칙 확인
+
+📋 **추가 정보**
+리전: ${userRegion}
+필요 권한: ${action}
+
+*실제 Bedrock LLM 연결 시 더 상세한 분석과 해결책을 제공합니다.*`
       }
     }
 
     if (errorMessage.includes('InvalidAccessKeyId')) {
       return {
         success: true,
-        answer: `🔍 **문제 원인** (시뮬레이션 분석)\n\nAWS Access Key ID가 올바르지 않거나 존재하지 않습니다.\n\n💡 **해결 방법**\n1. AWS 콘솔에서 새로운 Access Key 생성\n2. 기존 키가 삭제되었는지 확인\n3. 올바른 계정의 키를 사용하고 있는지 확인\n\n📋 **추가 정보**\n리전: ${userRegion}\n\n*실제 Bedrock LLM 연결 시 더 정확한 진단을 제공합니다.*`
+        answer: `🔍 **문제 원인** (시뮬레이션 분석)
+
+AWS Access Key ID가 올바르지 않거나 존재하지 않습니다.
+
+💡 **해결 방법**
+1. AWS 콘솔에서 새로운 Access Key 생성
+2. 기존 키가 삭제되었는지 확인
+3. 올바른 계정의 키를 사용하고 있는지 확인
+
+📋 **추가 정보**
+리전: ${userRegion}
+
+*실제 Bedrock LLM 연결 시 더 정확한 진단을 제공합니다.*`
       }
     }
 
     // 기본 시뮬레이션 응답
     return {
       success: true,
-      answer: `🔍 **문제 원인** (시뮬레이션 분석)\n\nAWS API 호출 중 오류가 발생했습니다.\n\n💡 **일반적인 해결 방법**\n1. AWS 자격증명 확인\n2. 필요한 권한 확인\n3. 네트워크 연결 상태 확인\n4. AWS 서비스 상태 페이지 확인\n\n📋 **상세 오류 메시지**\n${errorMessage}\n\n*실제 Bedrock LLM이 연결되면 더 구체적인 분석과 맞춤형 해결책을 제공합니다.*`
+      answer: `🔍 **문제 원인** (시뮬레이션 분석)
+
+AWS API 호출 중 오류가 발생했습니다.
+
+💡 **일반적인 해결 방법**
+1. AWS 자격증명 확인
+2. 필요한 권한 확인
+3. 네트워크 연결 상태 확인
+4. AWS 서비스 상태 페이지 확인
+
+📋 **상세 오류 메시지**
+${errorMessage}
+
+*실제 Bedrock LLM이 연결되면 더 구체적인 분석과 맞춤형 해결책을 제공합니다.*`
     }
   }
 }
