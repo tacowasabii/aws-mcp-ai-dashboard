@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { AWSDirectClient, AWSCredentials } from '../../../lib/aws-client'
+import { ChatBedrockConverse } from "@langchain/aws"
+import { getAWSMemory } from '@/lib/langchain-memory'
 
 interface AWSQueryResponse {
   data?: string
@@ -11,7 +13,7 @@ export async function POST(request: NextRequest) {
   let body: any = {}
   try {
     body = await request.json()
-    const { query, credentials }: { query: string, credentials: AWSCredentials } = body
+    const { query, credentials, accountId }: { query: string, credentials: AWSCredentials, accountId: string } = body
 
     // AWS 자격증명 검증
     if (!credentials?.accessKeyId || !credentials?.secretAccessKey || !credentials?.region) {
@@ -30,13 +32,37 @@ export async function POST(request: NextRequest) {
 
     console.log('🚀 Bedrock LLM + AWS SDK 통합 조회 시작...')
 
+    // LangChain 메모리 초기화
+    const llm = new ChatBedrockConverse({
+      model: "anthropic.claude-3-haiku-20240307-v1:0",
+      region: credentials.region,
+      credentials: {
+        accessKeyId: credentials.accessKeyId,
+        secretAccessKey: credentials.secretAccessKey,
+      },
+    })
+
+    const memory = getAWSMemory(llm)
+
+    // 컨텍스트 업데이트
+    memory.updateContext(accountId || 'default', {
+      awsRegion: credentials.region,
+      conversationPhase: 'followup'
+    })
+
+    // 컨텍스트가 포함된 프롬프트 생성
+    const contextualPrompt = await memory.getContextualPrompt(accountId || 'default', query)
+
     // AWS SDK + Bedrock LLM 통합 클라이언트로 처리
     const awsClient = new AWSDirectClient(credentials)
-    const response = await awsClient.processQuery(query)
+    const response = await awsClient.processQuery(contextualPrompt)
 
     if (response.success) {
+      // 성공한 대화를 메모리에 저장
+      await memory.addMessage(accountId || 'default', query, response.data)
+
       const info = response.usedLLM
-        ? '✅ Bedrock LLM이 AWS 데이터를 분석하여 답변했습니다'
+        ? '✅ Bedrock LLM이 대화 맥락을 고려하여 AWS 데이터를 분석했습니다'
         : '✅ AWS SDK를 통해 직접 조회되었습니다'
 
       const result: AWSQueryResponse = {

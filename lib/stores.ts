@@ -18,6 +18,7 @@ export interface ChatMessage {
   content: string
   timestamp: Date
   accountId?: string
+  conversationId?: string // 대화 세션 ID 추가
 }
 
 
@@ -25,22 +26,25 @@ interface AppState {
   // AWS 계정 상태
   accounts: AWSAccount[]
   activeAccountId: string | null
-  
+
   // 채팅 상태
   messages: ChatMessage[]
   isLoading: boolean
-  
-  
+  conversationSessions: Map<string, string> // accountId -> conversationId 매핑
+
+
   // 액션들
   addAccount: (account: AWSAccount) => void
   setActiveAccount: (accountId: string) => void
   removeAccount: (accountId: string) => void
   updateAccount: (accountId: string, updates: Partial<AWSAccount>) => void
-  
+
   addMessage: (message: ChatMessage) => void
   clearMessages: () => void
   setLoading: (loading: boolean) => void
-  
+  startNewConversation: (accountId: string) => string // 새 대화 세션 시작
+  getConversationId: (accountId: string) => string | undefined
+
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -48,6 +52,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   activeAccountId: null,
   messages: [],
   isLoading: false,
+  conversationSessions: new Map(),
   
   addAccount: (account) => 
     set((state) => {
@@ -91,7 +96,23 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ messages: [] }),
     
   setLoading: (loading) =>
-    set({ isLoading: loading })
+    set({ isLoading: loading }),
+
+  startNewConversation: (accountId) => {
+    const conversationId = `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const newSessions = new Map(get().conversationSessions)
+    newSessions.set(accountId, conversationId)
+
+    set((state) => ({
+      conversationSessions: newSessions,
+    }))
+
+    return conversationId
+  },
+
+  getConversationId: (accountId) => {
+    return get().conversationSessions.get(accountId)
+  },
 }))
 
 // 편의 함수들

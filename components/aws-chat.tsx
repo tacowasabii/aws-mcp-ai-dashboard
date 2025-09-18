@@ -5,12 +5,12 @@ import { useAppStore } from '@/lib/stores'
 import { Send, Bot, User } from 'lucide-react'
 
 export function AWSChat() {
-  const { activeAccountId, accounts, messages, addMessage } = useAppStore()
+  const { activeAccountId, accounts, messages, addMessage, startNewConversation, getConversationId } = useAppStore()
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [loadingAccountId, setLoadingAccountId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  
+
   const activeAccount = accounts.find(acc => acc.id === activeAccountId)
   const accountMessages = messages.filter(msg => msg.accountId === activeAccountId)
   
