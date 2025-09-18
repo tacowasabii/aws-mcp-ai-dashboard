@@ -8,6 +8,7 @@ export function AWSChat() {
   const { activeAccountId, accounts, messages, addMessage } = useAppStore()
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [loadingAccountId, setLoadingAccountId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
   const activeAccount = accounts.find(acc => acc.id === activeAccountId)
@@ -21,9 +22,10 @@ export function AWSChat() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim() || !activeAccount) return
-    
+
     setIsLoading(true)
-    
+    setLoadingAccountId(activeAccount.id)
+
     // 사용자 메시지 추가
     addMessage({
       id: Date.now().toString(),
@@ -32,6 +34,10 @@ export function AWSChat() {
       timestamp: new Date(),
       accountId: activeAccount.id
     })
+
+    // 입력 필드 즉시 초기화
+    const currentInput = input
+    setInput('')
     
     try {
       // LLM + AWS MCP 시스템을 통한 자연어 쿼리 처리
@@ -39,7 +45,7 @@ export function AWSChat() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          query: input,
+          query: currentInput,
           accountId: activeAccount.id,
           credentials: {
             accessKeyId: activeAccount.accessKeyId,
@@ -83,8 +89,8 @@ export function AWSChat() {
         accountId: activeAccount.id
       })
     } finally {
-      setInput('')
       setIsLoading(false)
+      setLoadingAccountId(null)
     }
   }
   
@@ -125,7 +131,7 @@ export function AWSChat() {
                   <Bot size={12} className="text-blue-600" />
                 </div>
               )}
-              
+
               <div
                 className={`max-w-md px-4 py-3 rounded-lg text-sm whitespace-pre-line ${
                   message.type === 'user'
@@ -135,7 +141,7 @@ export function AWSChat() {
               >
                 {message.content}
               </div>
-              
+
               {message.type === 'user' && (
                 <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
                   <User size={12} className="text-gray-600" />
@@ -143,6 +149,22 @@ export function AWSChat() {
               )}
             </div>
           ))}
+
+          {/* AI 응답 로딩 상태 - 현재 활성 계정에서만 표시 */}
+          {isLoading && loadingAccountId === activeAccountId && (
+            <div className="flex items-start gap-2 justify-start">
+              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                <Bot size={12} className="text-blue-600" />
+              </div>
+
+              <div className="max-w-md px-4 py-3 rounded-lg text-sm bg-white text-gray-800 shadow-sm border">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="ml-2 text-gray-500">AI가 답변을 생성중입니다...</span>
+                </div>
+              </div>
+            </div>
+          )}
           
           {accountMessages.length === 0 && (
             <div className="text-center py-12 text-gray-500">
