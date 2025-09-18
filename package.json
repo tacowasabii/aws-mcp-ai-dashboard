@@ -20,6 +20,7 @@
     "@langchain/community": "^0.3.56",
     "@langchain/core": "^0.3.77",
     "@langchain/langgraph": "^0.4.9",
+    "@supabase/supabase-js": "^2.57.4",
     "@tanstack/react-query": "^5.71.10",
     "lucide-react": "^0.263.1",
     "next": "^15.1.8",
