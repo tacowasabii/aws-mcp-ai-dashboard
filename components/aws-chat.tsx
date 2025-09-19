@@ -1,19 +1,20 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
 import { useAppStore } from "@/lib/stores";
+import MDEditor from "@uiw/react-md-editor";
 import {
-  Send,
-  Bot,
-  User,
-  RotateCcw,
-  MessageSquare,
   AlertTriangle,
+  Bot,
+  Check,
   ChevronDown,
   ChevronUp,
   Copy,
-  Check,
+  MessageSquare,
+  RotateCcw,
+  Send,
+  User,
 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { ErrorChat } from "./error-chat";
 
 export function AWSChat() {
@@ -255,13 +256,21 @@ export function AWSChat() {
                   <div className="flex flex-col gap-2">
                     <div className="relative group">
                       <div
+                        data-color-mode="light"
                         className={`max-w-md px-4 py-3 rounded-lg text-sm whitespace-pre-line break-words ${
                           message.type === "user"
                             ? "bg-blue-600 text-white"
                             : "bg-white text-gray-800 shadow-sm border"
                         }`}
                       >
-                        {message.content}
+                        {message.type === "ai" ? (
+                          <MDEditor.Markdown
+                            className="p-6 bg-white"
+                            source={message.content}
+                          />
+                        ) : (
+                          message.content
+                        )}
                       </div>
 
                       {/* 복사 버튼 - AI 메시지에만 표시 */}
