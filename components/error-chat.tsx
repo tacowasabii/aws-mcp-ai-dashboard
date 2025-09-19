@@ -163,9 +163,6 @@ export function ErrorChat() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <div title="해결됨">
-                      <CheckCircle size={16} className="text-green-500" />
-                    </div>
                     {isExpanded ? (
                       <ChevronUp size={16} className="text-gray-400" />
                     ) : (
