@@ -1,0 +1,1048 @@
+{
+  "name": "My workflow 5",
+  "nodes": [
+    {
+      "parameters": {
+        "text": "={{ $json.output }}",
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"refs\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"title\": { \"type\": \"string\" },\n          \"link\": { \"type\": \"string\", \"format\": \"uri\" }\n        },\n        \"required\": [\"title\", \"link\"]\n      }\n    }\n  },\n  \"required\": [\"refs\"]\n}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "4ae01f4e-5bd1-4d6c-9d50-7f24347920bf",
+      "name": "Information Extractor"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4.1",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        296,
+        224
+      ],
+      "id": "6430cc46-1bfb-4238-b37a-be0f19e1f07b",
+      "name": "Azure OpenAI Chat Model6",
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "Nbgkez6erJ8gvp0F",
+          "name": "Azure Open AI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        928,
+        148
+      ],
+      "id": "539e510d-8534-4158-9c65-5d58d1d760ef",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6c751610-8f61-4663-8e1f-7920c1c3160b",
+              "name": "refs",
+              "value": "={{ $json.output.refs }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        640,
+        0
+      ],
+      "id": "4d843af5-8ae8-491f-a11f-12eb986b22d3",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "={\n  \"type\":\"object\",\n  \"properties\":{\n\n        \"error\":{\n          \"type\":\"object\",\n            \"properties\":{\n              \"error_code\":{\"type\":\"string\"},\n              \"error_description\":{\"type\":\"string\"},\n              \"original_command\":{\"type\":\"string\"},\n              \"fixed_command\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\n              \"explanation\":{\"type\":\"string\"},\n              \"related_documentation\":{\n                \"type\":\"array\",\n                \"items\":{\"type\":\"string\"}\n              }\n            }\n        }\n\n  }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        16,
+        688
+      ],
+      "id": "8014678e-71c5-438a-93b3-68e980082856",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4.1",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -752,
+        688
+      ],
+      "id": "2b087c73-694f-421f-a0c4-23ed81e5e6f3",
+      "name": "Azure OpenAI Chat Model",
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "Nbgkez6erJ8gvp0F",
+          "name": "Azure Open AI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "gpt-4.1",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        1088
+      ],
+      "id": "59c09c1b-f99e-4e66-acce-4a7c7f5ea3b4",
+      "name": "Azure OpenAI Chat Model1",
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "Nbgkez6erJ8gvp0F",
+          "name": "Azure Open AI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "endpointUrl": "https://knowledge-mcp.global.api.aws",
+        "serverTransport": "httpStreamable",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.1,
+      "position": [
+        -304,
+        268
+      ],
+      "id": "21fab989-9589-4edf-aef2-dfc7e5520c42",
+      "name": "AWSDOC"
+    },
+    {
+      "parameters": {
+        "endpointUrl": "https://mcp.context7.com/mcp",
+        "serverTransport": "httpStreamable",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.1,
+      "position": [
+        -176,
+        268
+      ],
+      "id": "31c75703-886e-45d2-b6b0-320c844e9125",
+      "name": "Context7MCP"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=<Instruction>\nYour primary responsibility is to create actionable, risk-aware work plans based on user input.\nIdentify and summarize all potential risks, version-specific changes, breaking changes, and interruption possibilities.\nReference authoritative documentation (AWS official docs, Context7 MCP) for every step; always provide source links.\nUse a command-oriented, concise tone throughout.\nBegin with a Table of Contents.\nNumber and title each stage clearly.\nDefine all script variables at the top.\nEmphasize commands using Markdown (**bold**/`inline code`).\nPresent scripts sequentially, one at a time.\nOutput must be in English.\nEnd the document immediately after the final stage/script, with no closing remarks or conclusions.\nWhen modifications are required, preserve original content and only apply minimal necessary changes.\nAlways refer to official documentation when new technologies are proposed.\n</Instruction>\n<Agent>\nYou are an Agent dedicated to producing precise, risk-focused cloud work plans.\nFor every user request, analyze and document all relevant risks, version changes, and interruption factors.\nLeverage AWS Knowledge MCP and Context7 MCP to ensure all guidance is authoritative and up-to-date.\nYour output must be clear, actionable, and enable safe execution by humans.\nInclude copy-paste-ready variables, sequential scripts, and source links for every referenced document.\nIf any required input is missing, request it at the end.\n</Agent>\n{{ $('Webhook').item.json.body.query }}",
+        "options": {
+          "maxIterations": 7
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -440,
+        44
+      ],
+      "id": "c3b7cbf5-f159-46c3-8cc0-293d7c5e77c2",
+      "name": "문서 조회"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook').item.json.body.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        712,
+        520
+      ],
+      "id": "1eb28e55-09c1-42c2-a171-0a30c0b552b5",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4.1",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        584,
+        520
+      ],
+      "id": "f5d45765-1783-47ad-a6e2-f6be36ef152e",
+      "name": "Azure OpenAI Chat Model2",
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "Nbgkez6erJ8gvp0F",
+          "name": "Azure Open AI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "gpt-4.1",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        268
+      ],
+      "id": "3ee4f7f1-3f01-494e-a4f1-3e0f86185676",
+      "name": "Azure OpenAI Chat Model3",
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "Nbgkez6erJ8gvp0F",
+          "name": "Azure Open AI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Webhook').item.json.body.query }}\n\n",
+        "options": {
+          "systemMessage": "당신의 업무는 클라우드 리소스 작업 계획서를 수정하는 일입니다. 기존의 작업 계획서와 발생한 오류 명령어, 해결 방안을 보고 작업 계획서를 수정하세요. 수정할 때는 에러가 발생한 명령어만 수정하고 다른 내용은 절대 건들지 마세요. 답변은 수정된 작업 계획서 전체 내용을 출력해주세요.\n참고할 기존 작업 계획서가 없다면 작업 계획서를 먼저 만들어달라고 유저에게 요청하세요."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -440,
+        864
+      ],
+      "id": "9f34a068-e8b9-48f3-869b-011c7b70a10d",
+      "name": "계획서 수정"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=다음 사용자의 질문을 보고 cli에서 발생한 에러를 해결해주세요.\n먼저 과거의 에러 발생 데이터를 확인해서 비슷한 에러가 있었다면 해당 데이터를 활용해서 답변해주세요.\n만약 기존에 없었던 에러라면 새로 에러 발생 데이터를 생성해서 supabase DB에 저장해주세요.\n\n사용자 질문:\n{{ $('Webhook').item.json.body.query }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=당신은 AWS CLI 명령어 오류를 해결하고, 오류 해결 정보를 구조화된 JSON 형태로 출력하는 AI 에이전트입니다.\n사용자가 입력한 AWS CLI 명령어와 에러 메시지를 기반으로 오류 원인을 분석하고, 해결을 위한 정확한 명령어를 제시하며, RAG에 사용할 수 있는 구조화된 데이터를 생성해야 합니다.\n사용자는 다음 두 가지를 입력합니다\n- CLI 명령어: original_command\n- 에러 메시지: error_description\n명령어를 제외하고 한국어로 출력해주세요.\n\n에러를 해결하기 위해 먼저 데이터베이스를 확인하여 기존에 해결한 에러인지 체크하세요."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -440,
+        464
+      ],
+      "id": "e50cf424-b39d-4f1b-9510-6480c833773c",
+      "name": "오류 해결"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=<Instruction>\nCreate a work plan based on the user’s input.\nUse a formal, concise tone.\nMake it command-oriented; give brief explanations.\nOutput as a Markdown document, but never starts with \"```markdown\".\nInclude a Table of Contents at the top.\nStructure clear, numbered stages with headings.\nDefine all script variables at the very top.\nEmphasize commands with Markdown (**bold**/`inline code`); avoid the “A: b” style.\nEnsure variables and scripts are copy-paste ready.\nPresent scripts one at a time (sequential).\nFinal output language must be Korean.\nEnd the document without any closing remark; no conclusions or sign-offs. The document must end immediately after the final stage/script.\n</instruction>\n<Agent> An Agent that authors precise cloud change execution plans using AWS CLI and shell scripts. It leverages context7 for runtime context retrieval and aws knowledge mcp for authoritative AWS guidance. The plan must clearly convey intent and end-to-end flow so a human can execute safely and trace decisions. It outputs formal Markdown with copy-paste-ready variables and sequential scripts, requesting any missing inputs at the end. </Agent>\nUser: {{ $('Webhook').item.json.body.query }}\nDocs: {{ $json.output }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        576,
+        296
+      ],
+      "id": "cfa2fe28-b0db-4851-bf85-e1a30830a508",
+      "name": "makeplan"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "3c7a53f9-689e-4c4f-8cde-7cc487189bb4",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1776,
+        748
+      ],
+      "id": "acb39fdd-a89a-4ac9-b1f0-548856e2d236",
+      "name": "Webhook",
+      "webhookId": "3c7a53f9-689e-4c4f-8cde-7cc487189bb4"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"result\": {\n\t\t\t\"type\": \"number\"\n\t\t}\n\t}\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -1416,
+        972
+      ],
+      "id": "f52ed5ba-c1da-41f7-bff2-834029464363",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4.1",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -1544,
+        972
+      ],
+      "id": "5849775f-724f-4716-a883-0afbc27e9935",
+      "name": "Azure OpenAI Chat Model4",
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "Nbgkez6erJ8gvp0F",
+          "name": "Azure Open AI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7d95bb6b-7d9e-42b2-b394-e0d9126fae15",
+              "leftValue": "={{ $json.output.result }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1200,
+        748
+      ],
+      "id": "bafdc58b-6bb0-4ca4-a32a-b9a8bace3c92",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e1547262-8fff-4e54-9488-a0eaac3f78ad",
+              "leftValue": "={{ $json.output.result }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -976,
+        348
+      ],
+      "id": "e5722529-9af4-4a5c-987a-a6cc82495245",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "78232f41-9185-457a-9eb2-1b4340784687",
+              "leftValue": "={{ $json.output.result }}",
+              "rightValue": 2,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -976,
+        1168
+      ],
+      "id": "cb74b161-0bb6-49e5-9af3-1d1b89a3eca3",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4.1",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        1592
+      ],
+      "id": "7cef5078-d455-497c-9a17-5a11a81a0d9f",
+      "name": "Azure OpenAI Chat Model5",
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "Nbgkez6erJ8gvp0F",
+          "name": "Azure Open AI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## EKS 버전 1.28에서 1.30으로 업그레이드 하는 작업계획서 작성해줘\n\n## $aws eks describe-cluster --name production-eks-cluster --region ap-northeast-2\n## An error occurred (InvalidAccessKeyId) when calling the PutObject operation: The AWS Access Key Id you provided does not exist in our records.\n\n## 에러를 해결한 명령어를 적용해서 작업계획서를 수정해줘\n\n# 고마워",
+        "height": 592,
+        "width": 880,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        1024
+      ],
+      "id": "e85acf0a-8487-4156-94d9-a70fb7899671",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# Supabase Credential 설정법\n## Host : https://ckolilumwmotfjajnwqb.supabase.co\n## API Key : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrb2xpbHVtd21vdGZqYWpud3FiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODIwNzE2NywiZXhwIjoyMDczNzgzMTY3fQ.WbFsiDbN50dYnyu9H_66CIVHcJl6WGQ8AeAGwOkIdBI\n\n\n\n8시에 돌아올게요",
+        "height": 432,
+        "width": 752
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        896,
+        1088
+      ],
+      "id": "b3d8f1b4-88db-47f0-9ebb-32750481bf35",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook').item.json.body.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -304,
+        1088
+      ],
+      "id": "8411e8b1-7b8a-4273-a878-d4f0bd652dbc",
+      "name": "Simple Memory1"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      output: $('오류 해결').first().json.output.error.explanation + '\\n\\n' + $('오류 해결').first().json.output.error.fixed_command.join('\\n\\n')\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        288,
+        568
+      ],
+      "id": "4c130535-e492-49c5-a882-c70dc5068bf7",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook').item.json.body.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -624,
+        688
+      ],
+      "id": "35412f10-9605-4d22-b5ef-34b08dcbe6a1",
+      "name": "Simple Memory2"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "prompthon",
+        "limit": 10,
+        "filterType": "none"
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        -496,
+        688
+      ],
+      "id": "5846b3e0-f8ef-4009-896e-573ab12d93fb",
+      "name": "Get many rows in Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "t1AUfSDlqyj65mlr",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "prompthon",
+        "dataToSend": "autoMapInputData"
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        688
+      ],
+      "id": "a3c601c5-84fb-4e02-ba7b-705e1491830f",
+      "name": "Create a row in Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "t1AUfSDlqyj65mlr",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Webhook').item.json.body.query }}\n",
+        "options": {
+          "systemMessage": "당신의 업무는 사용자가 클라우드 리소스 작업 이외의 질문을 할 때 응답하는 것 입니다. 정해진 기능을 수행하지 않는 사용자가 마음에 들지 않습니다. 까칠한 어조를 유지하세요."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -440,
+        1368
+      ],
+      "id": "061b3a47-a2b9-46ea-b582-72cd5cc87bfc",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook').item.json.body.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -304,
+        1592
+      ],
+      "id": "c5b536e2-a327-4b50-a669-b73c531173b7",
+      "name": "Simple Memory3"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.query }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=당신의 업무는 사용자의 입력 메세지를 분석하여 적절한 agent로 배정하는 역할입니다. \n입력이 '작업계획서 작성'에 관한 내용이면 '0'을 리턴하세요. \n'CLI 명령어 에러'에 관한 내용이면 '1'을 리턴하세요. \n'작업계획서 수정'에 관한 내용이면 '2'를 리턴하세요. \n아무 분야에도 해당되지 않으면 '3'을 리턴하세요."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -1552,
+        748
+      ],
+      "id": "cd32d83e-ee5e-4247-b017-26fad9794da6",
+      "name": "질문 분류기"
+    },
+    {
+      "parameters": {
+        "endpointUrl": "https://knowledge-mcp.global.api.aws",
+        "serverTransport": "httpStreamable",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.1,
+      "position": [
+        -240,
+        688
+      ],
+      "id": "b5ece7a5-6526-4d23-8969-2a17d1e8ef1b",
+      "name": "AWSDOC1"
+    },
+    {
+      "parameters": {
+        "endpointUrl": "https://mcp.context7.com/mcp",
+        "serverTransport": "httpStreamable",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.1,
+      "position": [
+        -112,
+        688
+      ],
+      "id": "0006c01c-396b-425d-a60e-26ba19a514fa",
+      "name": "Context7MCP1"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook').item.json.body.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -432,
+        268
+      ],
+      "id": "841f67c2-e06d-4d2c-b117-4e95bc1898fb",
+      "name": "Simple Memory4"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Information Extractor": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Azure OpenAI Chat Model6": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "오류 해결",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Azure OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "오류 해결",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Azure OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "계획서 수정",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AWSDOC": {
+      "ai_tool": [
+        [
+          {
+            "node": "문서 조회",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Context7MCP": {
+      "ai_tool": [
+        [
+          {
+            "node": "문서 조회",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "문서 조회": {
+      "main": [
+        [
+          {
+            "node": "makeplan",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Information Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "makeplan",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Azure OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "makeplan",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Azure OpenAI Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "문서 조회",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "질문 분류기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "질문 분류기",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Azure OpenAI Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "질문 분류기",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "문서 조회",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "오류 해결",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "계획서 수정",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Azure OpenAI Chat Model5": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "makeplan": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "오류 해결": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "계획서 수정",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        []
+      ]
+    },
+    "Simple Memory2": {
+      "ai_memory": [
+        [
+          {
+            "node": "오류 해결",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows in Supabase": {
+      "ai_tool": [
+        [
+          {
+            "node": "오류 해결",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row in Supabase": {
+      "ai_tool": [
+        [
+          {
+            "node": "오류 해결",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory3": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "질문 분류기": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AWSDOC1": {
+      "ai_tool": [
+        [
+          {
+            "node": "오류 해결",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Context7MCP1": {
+      "ai_tool": [
+        [
+          {
+            "node": "오류 해결",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory4": {
+      "ai_memory": [
+        [
+          {
+            "node": "문서 조회",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "06833255-67ad-4537-8828-94d20c3f54a8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9b6143bfd57ac35a5045f7ba7939d58e800b8cdcfc58a55e83163e9e16095654"
+  },
+  "id": "wI3HxNSL2pSjKSJ8",
+  "tags": [
+    {
+      "createdAt": "2025-09-18T11:44:58.076Z",
+      "updatedAt": "2025-09-18T11:44:58.076Z",
+      "id": "OogcyyzO5q2XCPIg",
+      "name": "prompthon"
+    }
+  ]
+}
