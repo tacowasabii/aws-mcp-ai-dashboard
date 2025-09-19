@@ -734,7 +734,7 @@ ${(() => {
 
             {/* 모달 내용 */}
             <div
-              className="p-4 px-7 overflow-y-auto max-h-[calc(90vh-120px)]"
+              className="p-4 px-6 overflow-y-auto max-h-[calc(90vh-120px)]"
               onClick={(e) => {
                 // 마크다운 내의 모든 링크를 새창에서 열도록 설정
                 const target = e.target as HTMLElement;
