@@ -13,6 +13,7 @@ import {
   RotateCcw,
   Send,
   User,
+  X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ErrorChat } from "./error-chat";
@@ -32,6 +33,8 @@ export function AWSChat() {
   const [loadingAccountId, setLoadingAccountId] = useState<string | null>(null);
   const [expandedRefs, setExpandedRefs] = useState<Set<string>>(new Set());
   const [copiedMessages, setCopiedMessages] = useState<Set<string>>(new Set());
+  const [showMarkdownModal, setShowMarkdownModal] = useState(false);
+  const [markdownContent, setMarkdownContent] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const activeAccount = accounts.find((acc) => acc.id === activeAccountId);
@@ -77,6 +80,16 @@ export function AWSChat() {
     } catch (error) {
       console.error("복사 실패:", error);
     }
+  };
+
+  const openMarkdownModal = (content: string) => {
+    setMarkdownContent(content);
+    setShowMarkdownModal(true);
+  };
+
+  const closeMarkdownModal = () => {
+    setShowMarkdownModal(false);
+    setMarkdownContent("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -263,39 +276,41 @@ export function AWSChat() {
                             : "bg-white text-gray-800 shadow-sm border"
                         }`}
                       >
-                        {message.type === "ai" ? (
-                          <MDEditor.Markdown
-                            className="p-6 bg-white"
-                            source={message.content}
-                          />
-                        ) : (
-                          message.content
-                        )}
+                        {message.content}
                       </div>
 
-                      {/* 복사 버튼 - AI 메시지에만 표시 */}
+                      {/* 복사 버튼과 마크다운 보기 버튼 - AI 메시지에만 표시 */}
                       {message.type === "ai" && (
-                        <button
-                          onClick={() =>
-                            copyMessage(message.id, message.content)
-                          }
-                          className={`absolute top-2 right-2 p-1 rounded transition-all duration-200 opacity-0 group-hover:opacity-100 ${
-                            copiedMessages.has(message.id)
-                              ? "bg-green-100 text-green-600"
-                              : "bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800"
-                          }`}
-                          title={
-                            copiedMessages.has(message.id)
-                              ? "복사됨!"
-                              : "메시지 복사"
-                          }
-                        >
-                          {copiedMessages.has(message.id) ? (
-                            <Check size={14} />
-                          ) : (
-                            <Copy size={14} />
-                          )}
-                        </button>
+                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100">
+                          <button
+                            onClick={() => openMarkdownModal(message.content)}
+                            className="p-1 rounded transition-all text-xs duration-200 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800"
+                            title="마크다운으로 보기"
+                          >
+                            Markdown
+                          </button>
+                          <button
+                            onClick={() =>
+                              copyMessage(message.id, message.content)
+                            }
+                            className={`p-1 rounded transition-all duration-200 ${
+                              copiedMessages.has(message.id)
+                                ? "bg-green-100 text-green-600"
+                                : "bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800"
+                            }`}
+                            title={
+                              copiedMessages.has(message.id)
+                                ? "복사됨!"
+                                : "메시지 복사"
+                            }
+                          >
+                            {copiedMessages.has(message.id) ? (
+                              <Check size={14} />
+                            ) : (
+                              <Copy size={14} />
+                            )}
+                          </button>
+                        </div>
                       )}
                     </div>
 
@@ -417,6 +432,45 @@ export function AWSChat() {
             </button>
           </form>
         </>
+      )}
+
+      {/* 마크다운 뷰어 모달 */}
+      {showMarkdownModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={closeMarkdownModal}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 모달 헤더 */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">
+                마크다운 미리보기
+              </h3>
+              <button
+                onClick={closeMarkdownModal}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
+
+            {/* 모달 내용 */}
+            <div className="p-4 px-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+              <div data-color-mode="light">
+                <MDEditor.Markdown
+                  source={markdownContent}
+                  style={{
+                    backgroundColor: "transparent",
+                    color: "#1f2937",
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
