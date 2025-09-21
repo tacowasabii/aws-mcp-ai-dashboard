@@ -1,26 +1,34 @@
-# AWS AI Dashboard
+# AWS MCP AI Dashboard
 
-**Bedrock LLM + AWS SDK + LangChain Integration**: 토큰 효율적인 멀티턴 대화로 AWS 리소스를 자연어로 관리하는 지능형 대시보드
+**지능형 AWS 관리 대시보드**: Bedrock LLM + AWS SDK + LangChain + n8n 워크플로우를 통한 통합 AWS 자동화 시스템
 
 ## 🚀 주요 기능
 
-- 🤖 **Bedrock LLM + AWS SDK 통합**: AWS Bedrock Claude + AWS SDK를 통한 실시간 AWS 관리
-- 🧠 **토큰 효율적 멀티턴 대화**: LangChain 메모리로 긴 대화에서도 토큰 80-90% 절약
+- 🤖 **하이브리드 워크플로우**: AWS 리소스 조회는 Bedrock LLM + AWS SDK, 일반 쿼리는 n8n 워크플로우 자동 라우팅
+- 🧠 **토큰 효율적 멀티턴 대화**: LangChain ConversationSummaryBufferMemory로 80-90% 토큰 절약
 - 💬 **지능형 대화 컨텍스트**: 계정별 독립적인 대화 세션과 AWS 리소스 맥락 유지
-- 🔐 **사용자 자격증명**: 사용자가 직접 입력하는 AWS 자격증명으로 안전한 운영
+- 🔐 **안전한 자격증명 관리**: 사용자 입력 기반 AWS 자격증명으로 안전한 운영
 - 📊 **실시간 AWS 데이터**: EC2, EKS, VPC 등 실시간 데이터 조회 및 분석
 - 🎯 **컨텍스트 압축**: 대화 요약과 스마트 컨텍스트 선택으로 효율적인 토큰 사용
+- 💻 **통합 터미널**: 브라우저 내 안전한 AWS CLI 실행 환경
+- 🔄 **n8n 워크플로우**: 외부 n8n 인스턴스와 연동한 고급 자동화 워크플로우
+- 📱 **마크다운 뷰어/익스포트**: 대화 내용 마크다운 형태로 보기 및 내보내기
 
-## 🔄 새로운 아키텍처
+## 🔄 하이브리드 아키텍처
 
-### 기존 (단순 API 호출)
+### AWS 리소스 조회 플로우 (키워드 "조회" 감지)
 ```
-사용자 질문 → AWS SDK → AWS API → 응답
+사용자 질문 → 키워드 감지 → LangChain Memory → Bedrock LLM → AWS SDK → AWS API → 컨텍스트 압축 → 응답
 ```
 
-### 새로운 (토큰 효율적 멀티턴)
+### 일반 쿼리 플로우 (계획, 분석, 추천 등)
 ```
-사용자 질문 → LangChain Memory → Bedrock LLM → AWS SDK → AWS API → 컨텍스트 압축 → 지능적 응답
+사용자 질문 → 키워드 감지 → n8n 웹훅 → 외부 n8n 워크플로우 → 응답
+```
+
+### 터미널 통합
+```
+사용자 명령어 → 안전성 검증 → 시스템 실행 → 출력 반환
 ```
 
 ## 🧠 멀티턴 대화 시스템
@@ -48,44 +56,80 @@ interface ConversationContext {
 
 ## 🏗️ 시스템 구성
 
-1. **Frontend**: React/Next.js + Zustand 상태관리
+1. **Frontend**: React/Next.js + Zustand 상태관리 + Tailwind CSS
 2. **LLM Layer**: AWS Bedrock Claude (ChatBedrockConverse)
 3. **Memory Layer**: LangChain ConversationSummaryBufferMemory
-4. **AWS Integration**: AWS SDK
-5. **Context Management**: 계정별 대화 세션 및 컨텍스트 압축
+4. **AWS Integration**: AWS SDK v3 (EC2, EKS, STS, Bedrock Runtime)
+5. **Workflow Engine**: n8n 외부 인스턴스 (웹훅 연동)
+6. **Terminal Engine**: Node.js child_process (보안 제한)
+7. **Context Management**: 계정별 대화 세션 및 컨텍스트 압축
+8. **UI Components**: React Markdown Editor, Lucide React 아이콘
 
 ## 📋 설치 및 설정
 
-### 1️⃣ **의존성 설치**
+### 1️⃣ **시스템 요구사항**
+- Node.js 18+ (권장: 20+)
+- npm 또는 yarn
+- AWS CLI (터미널 기능 사용 시)
+- n8n 인스턴스 (워크플로우 기능 사용 시)
+
+### 2️⃣ **의존성 설치**
 ```bash
 npm install
 ```
 
-### 2️⃣ **환경변수 설정**
+### 3️⃣ **환경변수 설정**
 
 `.env.local` 파일 생성:
 
 ```bash
 # AWS Bedrock 설정 (필수)
 BEDROCK_AWS_REGION=us-east-1
-BEDROCK_AWS_ACCESS_KEY_ID=your-access-key-id
-BEDROCK_AWS_SECRET_ACCESS_KEY=your-secret-access-key
+BEDROCK_AWS_ACCESS_KEY_ID=your-bedrock-access-key-id
+BEDROCK_AWS_SECRET_ACCESS_KEY=your-bedrock-secret-access-key
 
 # 선택사항: LangSmith 추적
 LANGSMITH_TRACING=true
 LANGSMITH_API_KEY=your-langsmith-api-key
 ```
 
-### 3️⃣ **애플리케이션 실행**
+### 4️⃣ **외부 서비스 설정 (선택사항)**
+
+#### n8n 워크플로우 설정
+```bash
+# n8n 설치 및 실행
+npx n8n
+# 또는 Docker로 실행
+docker run -it --rm --name n8n -p 5678:5678 n8nio/n8n
+
+# 워크플로우 가져오기
+# n8n 웹 인터페이스에서 n8n/*.json 파일들을 Import
+```
+
+#### AWS CLI 설정 (터미널 기능용)
+```bash
+# AWS CLI 설치
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+
+# AWS CLI 설정 (선택사항 - 터미널에서 사용할 자격증명)
+aws configure
+```
+
+### 5️⃣ **애플리케이션 실행**
 ```bash
 npm run dev
 ```
 
-### 4️⃣ **AWS 계정 추가**
-- 브라우저에서 http://localhost:3000 접속
-- 대시보드에서 "AWS 계정 추가" 클릭
-- AWS 자격증명 입력 (Access Key ID, Secret Access Key, Region)
-- Bedrock LLM을 통한 자격증명 검증 완료
+### 6️⃣ **사용 시작**
+1. **브라우저에서 http://localhost:3000 접속**
+2. **AWS 계정 추가**:
+   - 대시보드에서 "AWS 계정 추가" 클릭
+   - AWS 자격증명 입력 (Access Key ID, Secret Access Key, Region)
+   - 자격증명 검증 완료
+3. **터미널 활성화**: 우하단 터미널 아이콘 클릭
+4. **채팅 시작**: AWS 리소스 조회 또는 일반 질문 입력
 
 ## 🔑 필요한 AWS 권한
 
@@ -150,7 +194,7 @@ npm run dev
 
 ## 🔗 API 엔드포인트
 
-### `/api/aws-query` - 멀티턴 AWS 쿼리
+### `/api/aws-workflow` - 통합 AWS 워크플로우
 ```typescript
 // 요청
 {
@@ -163,11 +207,105 @@ npm run dev
   }
 }
 
-// 응답
+// 응답 (AWS 리소스 조회)
 {
   "data": "🖥️ EC2 인스턴스 분석 결과 (대화 맥락 포함)...",
   "info": "✅ Bedrock LLM이 대화 맥락을 고려하여 AWS 데이터를 분석했습니다"
 }
+
+// 응답 (n8n 워크플로우)
+{
+  "data": "📋 클라우드 아키텍처 계획 및 추천사항...",
+  "info": "✅ n8n 워크플로우가 쿼리를 처리했습니다",
+  "usedN8nWebhook": true,
+  "refs": [
+    {"title": "AWS 아키텍처 가이드", "link": "https://..."}
+  ]
+}
+```
+
+### `/api/terminal` - 안전한 명령어 실행
+```typescript
+// 요청
+{
+  "command": "aws ec2 describe-instances"
+}
+
+// 응답
+{
+  "output": "명령어 실행 결과...",
+  "error": null
+}
+```
+
+### `/api/verify-aws` - AWS 자격증명 검증
+```typescript
+// 요청
+{
+  "credentials": {
+    "accessKeyId": "AKIA...",
+    "secretAccessKey": "...",
+    "region": "us-east-1"
+  }
+}
+
+// 응답
+{
+  "valid": true,
+  "accountId": "123456789012",
+  "region": "us-east-1"
+}
+```
+
+## 💻 통합 터미널
+
+### 안전한 명령어 실행
+- **허용된 명령어**: AWS CLI, ls, pwd, whoami, date, echo, cat, head, tail, grep, find, tree
+- **금지된 명령어**: rm, mv, cp, chmod, sudo, kill, wget, curl (파일 다운로드), 파일 리다이렉션
+- **보안 기능**: 명령어 패턴 검증, 10초 타임아웃, 1MB 출력 제한
+
+### 터미널 사용법
+```bash
+# AWS CLI 명령어 실행
+aws ec2 describe-instances
+aws s3 ls
+aws sts get-caller-identity
+
+# 시스템 정보 조회
+pwd
+whoami
+date
+ls -la
+
+# 파일 내용 확인
+cat /tmp/config.txt
+head -10 /var/log/app.log
+```
+
+### 터미널 기능
+- **리사이즈 가능**: 드래그로 높이 조절
+- **명령어 히스토리**: 화살표 키로 이전 명령어 탐색
+- **멀티라인 입력**: Shift+Enter로 줄바꿈, Enter로 실행
+- **최소화/복원**: 작업 공간 효율적 활용
+
+## 🔄 n8n 워크플로우 통합
+
+### 외부 n8n 인스턴스 연동
+- **웹훅 URL**: `http://localhost:5678/webhook/[webhook-id]`
+- **자동 라우팅**: AWS 리소스 조회가 아닌 경우 자동으로 n8n으로 전달
+- **응답 형태**: 구조화된 텍스트 + 참조 링크 배열
+
+### 지원하는 n8n 워크플로우
+1. **SuperCloudPlanner.json**: 클라우드 아키텍처 계획 및 설계
+2. **SuperSuperCloudPlanner.json**: 고급 클라우드 전략 수립
+3. **CloudPlanner.json**: 기본 클라우드 계획 지원
+4. **FinalCloudPlanner.json**: 최종 구현 계획 생성
+
+### 워크플로우 예시
+```bash
+사용자: "마이크로서비스 아키텍처로 전환하려면 어떤 단계가 필요해?"
+→ n8n 워크플로우 호출
+→ 상세한 전환 계획 + AWS 서비스 추천 + 참조 문서 링크 반환
 ```
 
 ## 🏗️ 기술 스택
@@ -175,10 +313,13 @@ npm run dev
 - **Frontend**: Next.js 15, React 18, TypeScript
 - **LLM**: AWS Bedrock Claude (ChatBedrockConverse)
 - **Memory**: LangChain ConversationSummaryBufferMemory
-- **AWS Integration**: AWS SDK
+- **AWS Integration**: AWS SDK v3 (EC2, EKS, STS, Bedrock Runtime)
 - **State Management**: Zustand with conversation sessions
-- **Styling**: Tailwind CSS
-- **Memory Persistence**: 계정별 대화 세션 관리
+- **Styling**: Tailwind CSS + Lucide React icons
+- **External Integration**: n8n webhook integration
+- **Terminal**: Node.js child_process with security controls
+- **UI Components**: React Markdown Editor (@uiw/react-md-editor)
+- **Data Fetching**: TanStack React Query
 
 ## 🧩 핵심 구성요소
 
@@ -261,6 +402,21 @@ console.log(`Token reduction: ${((beforeTokens - afterTokens) / beforeTokens * 1
 ```
 **해결책**: AWS 콘솔에서 Bedrock > Model access에서 Claude 모델 활성화
 
+### n8n 웹훅 연결 실패
+```bash
+❌ n8n 웹훅 연동 오류: Connection refused
+```
+**해결책**:
+1. n8n 인스턴스가 localhost:5678에서 실행 중인지 확인
+2. 웹훅 URL과 ID가 올바른지 확인
+3. 방화벽 설정 점검
+
+### 터미널 명령어 실행 실패
+```bash
+❌ Command not allowed: rm file.txt
+```
+**해결책**: 허용된 명령어 목록 확인 (aws, ls, pwd, whoami, date, echo, cat, head, tail, grep, find, tree)
+
 ### 메모리 오버플로우
 ```bash
 ❌ ConversationSummaryBufferMemory 토큰 한계 초과
@@ -272,6 +428,15 @@ console.log(`Token reduction: ${((beforeTokens - afterTokens) / beforeTokens * 1
 ❌ 이전 대화 맥락을 찾을 수 없습니다
 ```
 **해결책**: 계정별 대화 세션 ID 확인 및 메모리 초기화 상태 점검
+
+### AWS CLI 명령어 인식 안됨
+```bash
+❌ aws: command not found
+```
+**해결책**:
+1. AWS CLI 설치 확인
+2. PATH 환경변수에 AWS CLI 경로 추가
+3. 터미널 재시작
 
 ## 📊 성능 메트릭
 
