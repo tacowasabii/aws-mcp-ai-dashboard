@@ -4,8 +4,8 @@ import "@uiw/react-md-editor/markdown-editor.css";
 import "./globals.css";
 
 export const metadata = {
-  title: "AWS MCP AI Dashboard",
-  description: "AWS 다중 계정과 MCP를 연동한 AI 질의응답 서비스",
+  title: "AWS AI Dashboard",
+  description: "AWS 다중 계정과 SDK + n8n을 연동한 AI 질의응답 서비스",
 };
 
 export default function RootLayout({

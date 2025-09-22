@@ -5,7 +5,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="text-center px-4">
         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-8">
-          AWS MCP AI Dashboard
+          AWS AI Dashboard
         </h1>
         <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
           Bedrock LLM + AWS SDK + LangChain + n8n 워크플로우를 통한 지능형 AWS

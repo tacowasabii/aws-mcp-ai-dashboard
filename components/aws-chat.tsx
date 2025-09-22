@@ -349,7 +349,7 @@ ${(() => {
     </div>
 
     <div class="export-footer">
-        <p>AWS MCP AI Dashboard에서 생성됨</p>
+        <p>AWS AI Dashboard에서 생성됨</p>
     </div>
 </body>
 </html>`;
@@ -376,10 +376,12 @@ ${(() => {
     const resourceQueries = {
       ec2: "EC2 인스턴스 목록을 조회해주세요",
       eks: "EKS 클러스터 목록을 조회해주세요",
-      vpc: "VPC 목록을 조회해주세요"
+      vpc: "VPC 목록을 조회해주세요",
     };
 
-    const query = resourceQueries[resourceType as keyof typeof resourceQueries] || `${resourceType} 리소스 목록을 조회해주세요`;
+    const query =
+      resourceQueries[resourceType as keyof typeof resourceQueries] ||
+      `${resourceType} 리소스 목록을 조회해주세요`;
 
     // AI 초기 메시지 추가
     addMessage({
@@ -443,9 +445,10 @@ ${(() => {
         refs: result.refs || undefined,
       });
     } catch (error) {
-      const errorMessage = error instanceof Error
-        ? `❌ **연결 오류**\n\n${error.message}`
-        : "❌ **알 수 없는 오류가 발생했습니다**";
+      const errorMessage =
+        error instanceof Error
+          ? `❌ **연결 오류**\n\n${error.message}`
+          : "❌ **알 수 없는 오류가 발생했습니다**";
 
       addMessage({
         id: (Date.now() + 1).toString(),
@@ -605,7 +608,7 @@ ${(() => {
               <div className="flex items-center gap-2">
                 <span>{activeAccount.region}</span>
                 <button
-                  onClick={() => clearMessages()}
+                  onClick={async () => await clearMessages()}
                   className="p-1 hover:bg-gray-100 rounded-md transition-colors"
                   title="채팅 기록 초기화"
                 >
@@ -785,44 +788,62 @@ ${(() => {
 
                   <div className="flex flex-col gap-3 max-w-sm mx-auto">
                     <button
-                      onClick={() => handleResourceSelection('ec2')}
+                      onClick={() => handleResourceSelection("ec2")}
                       disabled={isLoading}
                       className="flex items-center justify-center gap-3 p-4 border-2 border-blue-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <span className="text-orange-600 font-bold text-sm">EC2</span>
+                        <span className="text-orange-600 font-bold text-sm">
+                          EC2
+                        </span>
                       </div>
                       <div className="text-left">
-                        <div className="font-medium text-gray-900">EC2 인스턴스</div>
-                        <div className="text-sm text-gray-500">가상 서버 인스턴스 조회</div>
+                        <div className="font-medium text-gray-900">
+                          EC2 인스턴스
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          가상 서버 인스턴스 조회
+                        </div>
                       </div>
                     </button>
 
                     <button
-                      onClick={() => handleResourceSelection('eks')}
+                      onClick={() => handleResourceSelection("eks")}
                       disabled={isLoading}
                       className="flex items-center justify-center gap-3 p-4 border-2 border-blue-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <span className="text-purple-600 font-bold text-sm">EKS</span>
+                        <span className="text-purple-600 font-bold text-sm">
+                          EKS
+                        </span>
                       </div>
                       <div className="text-left">
-                        <div className="font-medium text-gray-900">EKS 클러스터</div>
-                        <div className="text-sm text-gray-500">Kubernetes 클러스터 조회</div>
+                        <div className="font-medium text-gray-900">
+                          EKS 클러스터
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          Kubernetes 클러스터 조회
+                        </div>
                       </div>
                     </button>
 
                     <button
-                      onClick={() => handleResourceSelection('vpc')}
+                      onClick={() => handleResourceSelection("vpc")}
                       disabled={isLoading}
                       className="flex items-center justify-center gap-3 p-4 border-2 border-blue-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                        <span className="text-green-600 font-bold text-sm">VPC</span>
+                        <span className="text-green-600 font-bold text-sm">
+                          VPC
+                        </span>
                       </div>
                       <div className="text-left">
-                        <div className="font-medium text-gray-900">VPC 네트워크</div>
-                        <div className="text-sm text-gray-500">가상 프라이빗 클라우드 조회</div>
+                        <div className="font-medium text-gray-900">
+                          VPC 네트워크
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          가상 프라이빗 클라우드 조회
+                        </div>
                       </div>
                     </button>
                   </div>

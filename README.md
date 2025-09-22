@@ -1,4 +1,4 @@
-# AWS MCP AI Dashboard
+# AWS AI Dashboard
 
 **지능형 AWS 관리 대시보드**: Bedrock LLM + AWS SDK + LangChain + n8n 워크플로우를 통한 통합 AWS 자동화 시스템
 
@@ -17,16 +17,19 @@
 ## 🔄 하이브리드 아키텍처
 
 ### AWS 리소스 조회 플로우 (키워드 "조회" 감지)
+
 ```
 사용자 질문 → 키워드 감지 → LangChain Memory → Bedrock LLM → AWS SDK → AWS API → 컨텍스트 압축 → 응답
 ```
 
 ### 일반 쿼리 플로우 (계획, 분석, 추천 등)
+
 ```
 사용자 질문 → 키워드 감지 → n8n 웹훅 → 외부 n8n 워크플로우 → 응답
 ```
 
 ### 터미널 통합
+
 ```
 사용자 명령어 → 안전성 검증 → 시스템 실행 → 출력 반환
 ```
@@ -34,22 +37,25 @@
 ## 🧠 멀티턴 대화 시스템
 
 ### ConversationSummaryBufferMemory
+
 - **자동 요약**: 긴 대화 히스토리를 500토큰으로 압축
 - **컨텍스트 유지**: 최근 4개 메시지는 그대로 보존
 - **계정별 독립**: AWS 계정마다 독립적인 대화 세션
 
 ### AWS 특화 컨텍스트 관리
+
 ```typescript
 interface ConversationContext {
   accountId: string;
   awsRegion: string;
   lastQueries: string[];
   activeResources: string[];
-  conversationPhase: 'initial' | 'followup' | 'troubleshooting';
+  conversationPhase: "initial" | "followup" | "troubleshooting";
 }
 ```
 
 ### 토큰 절약 효과
+
 - **Before**: 매번 전체 대화 히스토리 (5000+ 토큰)
 - **After**: 요약된 컨텍스트 + 최근 메시지 (500토큰 이하)
 - **절약률**: 80-90% 토큰 사용량 감소
@@ -68,12 +74,14 @@ interface ConversationContext {
 ## 📋 설치 및 설정
 
 ### 1️⃣ **시스템 요구사항**
+
 - Node.js 18+ (권장: 20+)
 - npm 또는 yarn
 - AWS CLI (터미널 기능 사용 시)
 - n8n 인스턴스 (워크플로우 기능 사용 시)
 
 ### 2️⃣ **의존성 설치**
+
 ```bash
 npm install
 ```
@@ -96,6 +104,7 @@ LANGSMITH_API_KEY=your-langsmith-api-key
 ### 4️⃣ **외부 서비스 설정 (선택사항)**
 
 #### n8n 워크플로우 설정
+
 ```bash
 # n8n 설치 및 실행
 npx n8n
@@ -107,6 +116,7 @@ docker run -it --rm --name n8n -p 5678:5678 n8nio/n8n
 ```
 
 #### AWS CLI 설정 (터미널 기능용)
+
 ```bash
 # AWS CLI 설치
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -118,11 +128,13 @@ aws configure
 ```
 
 ### 5️⃣ **애플리케이션 실행**
+
 ```bash
 npm run dev
 ```
 
 ### 6️⃣ **사용 시작**
+
 1. **브라우저에서 http://localhost:3000 접속**
 2. **AWS 계정 추가**:
    - 대시보드에서 "AWS 계정 추가" 클릭
@@ -134,6 +146,7 @@ npm run dev
 ## 🔑 필요한 AWS 권한
 
 ### Bedrock 서비스용 (환경변수)
+
 ```json
 {
   "Version": "2012-10-17",
@@ -151,6 +164,7 @@ npm run dev
 ```
 
 ### 사용자 계정용 (대시보드 입력)
+
 ```json
 {
   "Version": "2012-10-17",
@@ -178,16 +192,19 @@ npm run dev
 ## 💬 멀티턴 대화 예시
 
 ### 첫 번째 질문:
+
 **사용자**: "현재 실행 중인 EC2 인스턴스는 몇 개야?"
 
 **AI**: "현재 AWS 계정에서 총 3개의 EC2 인스턴스가 실행 중입니다..."
 
 ### 두 번째 질문 (컨텍스트 유지):
+
 **사용자**: "그 중에서 가장 비용이 많이 드는 건 어떤 거야?"
 
 **AI**: "앞서 조회한 3개 인스턴스 중에서 t3.large 타입의 데이터베이스 서버가 가장 비용이 높습니다..."
 
 ### 세 번째 질문 (연관 추천):
+
 **사용자**: "비용을 줄일 방법이 있을까?"
 
 **AI**: "이전 대화에서 확인한 t3.large 인스턴스의 CPU 사용률을 분석해보니..."
@@ -195,6 +212,7 @@ npm run dev
 ## 🔗 API 엔드포인트
 
 ### `/api/aws-workflow` - 통합 AWS 워크플로우
+
 ```typescript
 // 요청
 {
@@ -225,6 +243,7 @@ npm run dev
 ```
 
 ### `/api/terminal` - 안전한 명령어 실행
+
 ```typescript
 // 요청
 {
@@ -239,6 +258,7 @@ npm run dev
 ```
 
 ### `/api/verify-aws` - AWS 자격증명 검증
+
 ```typescript
 // 요청
 {
@@ -260,11 +280,13 @@ npm run dev
 ## 💻 통합 터미널
 
 ### 안전한 명령어 실행
+
 - **허용된 명령어**: AWS CLI, ls, pwd, whoami, date, echo, cat, head, tail, grep, find, tree
 - **금지된 명령어**: rm, mv, cp, chmod, sudo, kill, wget, curl (파일 다운로드), 파일 리다이렉션
 - **보안 기능**: 명령어 패턴 검증, 10초 타임아웃, 1MB 출력 제한
 
 ### 터미널 사용법
+
 ```bash
 # AWS CLI 명령어 실행
 aws ec2 describe-instances
@@ -283,6 +305,7 @@ head -10 /var/log/app.log
 ```
 
 ### 터미널 기능
+
 - **리사이즈 가능**: 드래그로 높이 조절
 - **명령어 히스토리**: 화살표 키로 이전 명령어 탐색
 - **멀티라인 입력**: Shift+Enter로 줄바꿈, Enter로 실행
@@ -291,17 +314,20 @@ head -10 /var/log/app.log
 ## 🔄 n8n 워크플로우 통합
 
 ### 외부 n8n 인스턴스 연동
+
 - **웹훅 URL**: `http://localhost:5678/webhook/[webhook-id]`
 - **자동 라우팅**: AWS 리소스 조회가 아닌 경우 자동으로 n8n으로 전달
 - **응답 형태**: 구조화된 텍스트 + 참조 링크 배열
 
 ### 지원하는 n8n 워크플로우
+
 1. **SuperCloudPlanner.json**: 클라우드 아키텍처 계획 및 설계
 2. **SuperSuperCloudPlanner.json**: 고급 클라우드 전략 수립
 3. **CloudPlanner.json**: 기본 클라우드 계획 지원
 4. **FinalCloudPlanner.json**: 최종 구현 계획 생성
 
 ### 워크플로우 예시
+
 ```bash
 사용자: "마이크로서비스 아키텍처로 전환하려면 어떤 단계가 필요해?"
 → n8n 워크플로우 호출
@@ -324,23 +350,28 @@ head -10 /var/log/app.log
 ## 🧩 핵심 구성요소
 
 ### LangChain 메모리 시스템
+
 ```typescript
 // lib/langchain-memory.ts
 export class AWSConversationMemory {
   private memories: Map<string, ConversationSummaryBufferMemory>;
   private contexts: Map<string, ConversationContext>;
 
-  async getContextualPrompt(accountId: string, newQuery: string): Promise<string>
-  async addMessage(accountId: string, human: string, ai: string)
+  async getContextualPrompt(
+    accountId: string,
+    newQuery: string
+  ): Promise<string>;
+  async addMessage(accountId: string, human: string, ai: string);
 }
 ```
 
 ### 대화 컨텍스트 관리
+
 ```typescript
 // lib/stores.ts
 interface ChatMessage {
   id: string;
-  type: 'user' | 'ai' | 'system';
+  type: "user" | "ai" | "system";
   content: string;
   timestamp: Date;
   accountId?: string;
@@ -349,6 +380,7 @@ interface ChatMessage {
 ```
 
 ### AWS 통합 레이어
+
 ```typescript
 // app/api/aws-query/route.ts
 const llm = new ChatBedrockConverse({
@@ -364,19 +396,26 @@ const contextualPrompt = await memory.getContextualPrompt(accountId, query);
 ## 🔧 개발 및 디버깅
 
 ### LangChain 메모리 상태 확인
+
 ```typescript
 // 메모리 내용 확인
 const memory = getAWSMemory(llm);
 const context = memory.getContext(accountId);
-console.log('Current context:', context);
+console.log("Current context:", context);
 ```
 
 ### 토큰 사용량 모니터링
+
 ```typescript
 // 요약 전후 토큰 수 비교
 const beforeTokens = countTokens(fullHistory);
 const afterTokens = countTokens(summarizedContext);
-console.log(`Token reduction: ${((beforeTokens - afterTokens) / beforeTokens * 100).toFixed(1)}%`);
+console.log(
+  `Token reduction: ${(
+    ((beforeTokens - afterTokens) / beforeTokens) *
+    100
+  ).toFixed(1)}%`
+);
 ```
 
 ## 🚀 배포 준비사항
@@ -397,43 +436,57 @@ console.log(`Token reduction: ${((beforeTokens - afterTokens) / beforeTokens * 1
 ## 🐛 문제 해결
 
 ### Bedrock 연결 실패
+
 ```bash
 ❌ Bedrock LLM 연동 오류: Region에서 Claude 모델 사용 불가
 ```
+
 **해결책**: AWS 콘솔에서 Bedrock > Model access에서 Claude 모델 활성화
 
 ### n8n 웹훅 연결 실패
+
 ```bash
 ❌ n8n 웹훅 연동 오류: Connection refused
 ```
+
 **해결책**:
+
 1. n8n 인스턴스가 localhost:5678에서 실행 중인지 확인
 2. 웹훅 URL과 ID가 올바른지 확인
 3. 방화벽 설정 점검
 
 ### 터미널 명령어 실행 실패
+
 ```bash
 ❌ Command not allowed: rm file.txt
 ```
+
 **해결책**: 허용된 명령어 목록 확인 (aws, ls, pwd, whoami, date, echo, cat, head, tail, grep, find, tree)
 
 ### 메모리 오버플로우
+
 ```bash
 ❌ ConversationSummaryBufferMemory 토큰 한계 초과
 ```
+
 **해결책**: `maxTokenLimit`를 500에서 300으로 줄이거나 요약 빈도 증가
 
 ### 대화 컨텍스트 손실
+
 ```bash
 ❌ 이전 대화 맥락을 찾을 수 없습니다
 ```
+
 **해결책**: 계정별 대화 세션 ID 확인 및 메모리 초기화 상태 점검
 
 ### AWS CLI 명령어 인식 안됨
+
 ```bash
 ❌ aws: command not found
 ```
+
 **해결책**:
+
 1. AWS CLI 설치 확인
 2. PATH 환경변수에 AWS CLI 경로 추가
 3. 터미널 재시작
@@ -441,11 +494,13 @@ console.log(`Token reduction: ${((beforeTokens - afterTokens) / beforeTokens * 1
 ## 📊 성능 메트릭
 
 ### 토큰 효율성
+
 - **일반 대화**: 평균 300-500 토큰/요청
 - **긴 대화 (10+ 턴)**: 평균 400-600 토큰/요청 (90% 절약)
 - **요약 품질**: AWS 컨텍스트 95% 보존
 
 ### 응답 시간
+
 - **컨텍스트 로딩**: 평균 50ms
 - **Bedrock LLM 호출**: 평균 1-3초
 - **전체 응답**: 평균 1.5-4초
@@ -458,4 +513,4 @@ MIT License
 
 **🎉 토큰 효율적인 멀티턴 AWS 대화의 미래를 경험해보세요!**
 
-*LangChain Memory + Bedrock LLM + AWS SDK = Smart Conversations ✨*
+_LangChain Memory + Bedrock LLM + AWS SDK = Smart Conversations ✨_
