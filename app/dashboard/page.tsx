@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { useAppStore } from "@/lib/stores";
 import { AddAccountModal } from "@/components/add-account-modal";
-import { AccountList } from "@/components/account-list";
+import { AccountDropdown } from "@/components/account-dropdown";
 import { ConnectionStatus } from "@/components/connection-status";
 import { AWSChat } from "@/components/aws-chat";
+import { AWSResourceWidgets } from "@/components/aws-resource-widgets";
 import { Terminal } from "@/components/terminal";
-import { Plus } from "lucide-react";
 
 export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -21,22 +21,27 @@ export default function DashboardPage() {
         <nav className="bg-white shadow-sm border-b">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
-              <h1 className="text-xl font-semibold">AWS Dashboard</h1>
+              <h1 className="text-xl font-semibold text-gray-900">AWS MCP AI Dashboard</h1>
               <div className="flex items-center gap-4">
                 <ConnectionStatus />
-                {activeAccount && (
-                  <div className="text-sm">
-                    <span className="text-gray-500">활성 계정:</span>
-                    <span className="ml-2 font-medium">
-                      {activeAccount.name}
-                    </span>
-                  </div>
-                )}
+                <AccountDropdown />
                 <button
                   onClick={() => setIsModalOpen(true)}
-                  className="bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-blue-700"
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                 >
-                  <Plus size={16} />
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
                   계정 추가
                 </button>
               </div>
@@ -48,17 +53,12 @@ export default function DashboardPage() {
           className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
           style={{ height: "calc(100vh - 4rem)" }}
         >
-          <div className="flex flex-col lg:flex-row gap-6 h-full">
-            {/* 사이드바: 계정 관리 & 연결 상태 */}
-            <div className="space-y-6">
-              <div className="bg-white rounded-lg shadow p-4 lg:w-[230px]">
-                <h2 className="text-base font-medium mb-3">AWS 계정</h2>
-                <AccountList />
-              </div>
-            </div>
+          <div className="flex flex-col gap-6 h-full">
+            {/* AWS 리소스 위젯 */}
+            <AWSResourceWidgets />
 
             {/* 메인: AI 채팅 영역 */}
-            <div className="lg:col-span-3 flex-grow bg-white rounded-lg shadow p-6 flex flex-col">
+            <div className="flex-grow bg-white rounded-lg shadow p-6 flex flex-col">
               <h2 className="text-lg font-medium mb-4">AWS 리소스 조회</h2>
               <div className="flex-1 min-h-0">
                 <AWSChat />
