@@ -11,17 +11,16 @@ import { Terminal } from "@/components/terminal";
 
 export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { accounts, activeAccountId } = useAppStore();
-
-  const activeAccount = accounts.find((acc) => acc.id === activeAccountId);
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50">
+      <div className="bg-gray-50">
         <nav className="bg-white shadow-sm border-b">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
-              <h1 className="text-xl font-semibold text-gray-900">AWS MCP AI Dashboard</h1>
+              <h1 className="text-xl font-semibold text-gray-900">
+                AWS MCP AI Dashboard
+              </h1>
               <div className="flex items-center gap-4">
                 <ConnectionStatus />
                 <AccountDropdown />
