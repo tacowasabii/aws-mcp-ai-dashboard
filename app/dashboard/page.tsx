@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useAppStore } from "@/lib/stores";
 import { AddAccountModal } from "@/components/add-account-modal";
 import { AccountDropdown } from "@/components/account-dropdown";
 import { ConnectionStatus } from "@/components/connection-status";
 import { AWSChat } from "@/components/aws-chat";
-import { AWSResourceWidgets } from "@/components/aws-resource-widgets";
 import { Terminal } from "@/components/terminal";
 
 export default function DashboardPage() {
@@ -53,9 +51,6 @@ export default function DashboardPage() {
           style={{ height: "calc(100vh - 4rem)" }}
         >
           <div className="flex flex-col gap-6 h-full">
-            {/* AWS 리소스 위젯 */}
-            <AWSResourceWidgets />
-
             {/* 메인: AI 채팅 영역 */}
             <div className="flex-grow bg-white rounded-lg shadow p-6 flex flex-col">
               <h2 className="text-lg font-medium mb-4">AWS 리소스 조회</h2>

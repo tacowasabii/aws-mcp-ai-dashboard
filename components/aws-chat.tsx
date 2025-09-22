@@ -32,6 +32,7 @@ export function AWSChat() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loadingAccountId, setLoadingAccountId] = useState<string | null>(null);
+  const [showResourceSelection, setShowResourceSelection] = useState(true);
   const [expandedRefs, setExpandedRefs] = useState<Set<string>>(new Set());
   const [copiedMessages, setCopiedMessages] = useState<Set<string>>(new Set());
   const [showMarkdownModal, setShowMarkdownModal] = useState(false);
@@ -45,6 +46,14 @@ export function AWSChat() {
 
   // 메시지 개수를 추적하여 실제로 메시지가 추가될 때만 스크롤
   const [prevMessageCount, setPrevMessageCount] = useState(0);
+
+  // 계정이 변경되면 리소스 선택 화면을 다시 보여줌
+  useEffect(() => {
+    if (activeAccountId) {
+      const hasMessages = accountMessages.length > 0;
+      setShowResourceSelection(!hasMessages);
+    }
+  }, [activeAccountId, accountMessages.length]);
 
   useEffect(() => {
     if (accountMessages.length > prevMessageCount) {
@@ -357,6 +366,100 @@ ${(() => {
     URL.revokeObjectURL(url);
   };
 
+  const handleResourceSelection = async (resourceType: string) => {
+    if (!activeAccount) return;
+    setShowResourceSelection(false);
+    setIsLoading(true);
+    setLoadingAccountId(activeAccount.id);
+
+    // 리소스 타입에 따른 기본 쿼리 설정
+    const resourceQueries = {
+      ec2: "EC2 인스턴스 목록을 조회해주세요",
+      eks: "EKS 클러스터 목록을 조회해주세요",
+      vpc: "VPC 목록을 조회해주세요"
+    };
+
+    const query = resourceQueries[resourceType as keyof typeof resourceQueries] || `${resourceType} 리소스 목록을 조회해주세요`;
+
+    // AI 초기 메시지 추가
+    addMessage({
+      id: Date.now().toString(),
+      type: "ai",
+      content: `안녕하세요! ${resourceType.toUpperCase()} 리소스를 조회하겠습니다. 잠시만 기다려주세요...`,
+      timestamp: new Date(),
+      accountId: activeAccount.id,
+    });
+
+    try {
+      // AWS SDK를 통한 리소스 조회
+      const response = await fetch("/api/aws-workflow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: query,
+          accountId: activeAccount.id,
+          credentials: {
+            accessKeyId: activeAccount.accessKeyId,
+            secretAccessKey: activeAccount.secretAccessKey,
+            region: activeAccount.region,
+          },
+        }),
+      });
+
+      const result = await response.json();
+
+      // 응답 내용 처리 (성공/에러 모두 처리)
+      let messageContent = "";
+      if (result.error) {
+        // 에러가 있는 경우
+        const errorData =
+          typeof result.data === "string"
+            ? result.data
+            : JSON.stringify(result.data, null, 2);
+        const errorMsg =
+          typeof result.error === "string"
+            ? result.error
+            : JSON.stringify(result.error, null, 2);
+        messageContent = `❌ **오류 발생**\n\n${errorData || errorMsg}`;
+      } else {
+        // 정상 응답인 경우 - 객체인 경우 문자열로 변환
+        if (typeof result.data === "string") {
+          messageContent =
+            result.data || "요청이 성공했으나 응답이 비어있습니다.";
+        } else if (typeof result.data === "object" && result.data !== null) {
+          messageContent = JSON.stringify(result.data, null, 2);
+        } else {
+          messageContent =
+            result.data || "요청이 성공했으나 응답이 비어있습니다.";
+        }
+      }
+
+      addMessage({
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: messageContent,
+        timestamp: new Date(),
+        accountId: activeAccount.id,
+        refs: result.refs || undefined,
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error
+        ? `❌ **연결 오류**\n\n${error.message}`
+        : "❌ **알 수 없는 오류가 발생했습니다**";
+
+      addMessage({
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: errorMessage,
+        timestamp: new Date(),
+        accountId: activeAccount.id,
+      });
+    } finally {
+      setIsLoading(false);
+      setLoadingAccountId(null);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || !activeAccount) return;
@@ -658,7 +761,7 @@ ${(() => {
                 </div>
               )}
 
-              {accountMessages.length === 0 && (
+              {accountMessages.length === 0 && !showResourceSelection && (
                 <div className="text-center py-12 text-gray-500">
                   <Bot size={32} className="mx-auto mb-4 text-gray-400" />
                   <p className="text-lg mb-2">AWS 전문 어시스턴트</p>
@@ -666,6 +769,63 @@ ${(() => {
                     Bedrock LLM이 AWS 전문가로서 답변합니다. EC2/EKS/VPC는
                     실시간 데이터로, 다른 질문은 전문 지식으로 답변해드립니다.
                   </p>
+                </div>
+              )}
+
+              {/* 리소스 선택 화면 */}
+              {showResourceSelection && (
+                <div className="text-center py-12">
+                  <Bot size={48} className="mx-auto mb-6 text-blue-500" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    어떤 AWS 리소스를 조회하시겠습니까?
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-8">
+                    원하는 리소스를 선택하면 자동으로 목록을 조회해드립니다.
+                  </p>
+
+                  <div className="flex flex-col gap-3 max-w-sm mx-auto">
+                    <button
+                      onClick={() => handleResourceSelection('ec2')}
+                      disabled={isLoading}
+                      className="flex items-center justify-center gap-3 p-4 border-2 border-blue-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <span className="text-orange-600 font-bold text-sm">EC2</span>
+                      </div>
+                      <div className="text-left">
+                        <div className="font-medium text-gray-900">EC2 인스턴스</div>
+                        <div className="text-sm text-gray-500">가상 서버 인스턴스 조회</div>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => handleResourceSelection('eks')}
+                      disabled={isLoading}
+                      className="flex items-center justify-center gap-3 p-4 border-2 border-blue-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <span className="text-purple-600 font-bold text-sm">EKS</span>
+                      </div>
+                      <div className="text-left">
+                        <div className="font-medium text-gray-900">EKS 클러스터</div>
+                        <div className="text-sm text-gray-500">Kubernetes 클러스터 조회</div>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => handleResourceSelection('vpc')}
+                      disabled={isLoading}
+                      className="flex items-center justify-center gap-3 p-4 border-2 border-blue-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <span className="text-green-600 font-bold text-sm">VPC</span>
+                      </div>
+                      <div className="text-left">
+                        <div className="font-medium text-gray-900">VPC 네트워크</div>
+                        <div className="text-sm text-gray-500">가상 프라이빗 클라우드 조회</div>
+                      </div>
+                    </button>
+                  </div>
                 </div>
               )}
 
