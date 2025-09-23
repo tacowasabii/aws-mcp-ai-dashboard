@@ -28,6 +28,8 @@ export function AWSChat() {
     addMessage,
     clearMessages,
     setActiveChatTab,
+    getConversationId,
+    startNewConversation,
   } = useAppStore();
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -40,20 +42,23 @@ export function AWSChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const activeAccount = accounts.find((acc) => acc.id === activeAccountId);
-  const accountMessages = messages.filter(
-    (msg) => msg.accountId === activeAccountId
-  );
+  const accountMessages = activeAccountId ? messages.get(activeAccountId) || [] : [];
 
   // 메시지 개수를 추적하여 실제로 메시지가 추가될 때만 스크롤
   const [prevMessageCount, setPrevMessageCount] = useState(0);
 
-  // 계정이 변경되면 리소스 선택 화면을 다시 보여줌
+  // 계정이 변경되면 리소스 선택 화면을 다시 보여주고 새 대화 세션 시작
   useEffect(() => {
     if (activeAccountId) {
       const hasMessages = accountMessages.length > 0;
       setShowResourceSelection(!hasMessages);
+
+      // 대화 세션이 없으면 새로 생성
+      if (!getConversationId(activeAccountId)) {
+        startNewConversation(activeAccountId);
+      }
     }
-  }, [activeAccountId, accountMessages.length]);
+  }, [activeAccountId, accountMessages.length, getConversationId, startNewConversation]);
 
   useEffect(() => {
     if (accountMessages.length > prevMessageCount) {
@@ -389,17 +394,19 @@ ${(() => {
       type: "ai",
       content: `안녕하세요! ${resourceType.toUpperCase()} 리소스를 조회하겠습니다. 잠시만 기다려주세요...`,
       timestamp: new Date(),
-      accountId: activeAccount.id,
     });
 
     try {
+      // 현재 대화 세션 ID 가져오기
+      const conversationId = getConversationId(activeAccount.id);
+
       // AWS SDK를 통한 리소스 조회
       const response = await fetch("/api/aws-workflow", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: query,
-          accountId: activeAccount.id,
+          sessionId: conversationId || activeAccount.id,
           credentials: {
             accessKeyId: activeAccount.accessKeyId,
             secretAccessKey: activeAccount.secretAccessKey,
@@ -441,7 +448,6 @@ ${(() => {
         type: "ai",
         content: messageContent,
         timestamp: new Date(),
-        accountId: activeAccount.id,
         refs: result.refs || undefined,
       });
     } catch (error) {
@@ -455,7 +461,6 @@ ${(() => {
         type: "ai",
         content: errorMessage,
         timestamp: new Date(),
-        accountId: activeAccount.id,
       });
     } finally {
       setIsLoading(false);
@@ -476,7 +481,6 @@ ${(() => {
       type: "user",
       content: input,
       timestamp: new Date(),
-      accountId: activeAccount.id,
     });
 
     // 입력 필드 즉시 초기화
@@ -484,13 +488,16 @@ ${(() => {
     setInput("");
 
     try {
+      // 현재 대화 세션 ID 가져오기
+      const conversationId = getConversationId(activeAccount.id);
+
       // 통합 AWS 워크플로우를 통한 자연어 쿼리 처리
       const response = await fetch("/api/aws-workflow", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: currentInput,
-          accountId: activeAccount.id,
+          sessionId: conversationId || activeAccount.id,
           credentials: {
             accessKeyId: activeAccount.accessKeyId,
             secretAccessKey: activeAccount.secretAccessKey,
@@ -532,7 +539,6 @@ ${(() => {
         type: "ai",
         content: messageContent,
         timestamp: new Date(),
-        accountId: activeAccount.id,
         refs: result.refs || undefined, // refs 데이터 추가
       });
     } catch (error) {
@@ -547,7 +553,6 @@ ${(() => {
         type: "ai",
         content: errorMessage,
         timestamp: new Date(),
-        accountId: activeAccount.id,
       });
     } finally {
       setIsLoading(false);
@@ -578,9 +583,9 @@ ${(() => {
         >
           <MessageSquare size={16} />
           작업계획서 채팅
-          {messages.length > 0 && (
+          {accountMessages.length > 0 && (
             <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full">
-              {messages.length}
+              {accountMessages.length}
             </span>
           )}
         </button>
@@ -608,7 +613,7 @@ ${(() => {
               <div className="flex items-center gap-2">
                 <span>{activeAccount.region}</span>
                 <button
-                  onClick={async () => await clearMessages()}
+                  onClick={() => clearMessages()}
                   className="p-1 hover:bg-gray-100 rounded-md transition-colors"
                   title="채팅 기록 초기화"
                 >

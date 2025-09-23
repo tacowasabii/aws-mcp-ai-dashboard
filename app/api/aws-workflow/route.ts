@@ -21,8 +21,12 @@ export async function POST(request: NextRequest) {
     const {
       query,
       credentials,
-      accountId,
-    }: { query: string; credentials: AWSCredentials; accountId: string } = body;
+      sessionId,
+    }: {
+      query: string;
+      credentials: AWSCredentials;
+      sessionId: string;
+    } = body;
 
     // AWS 자격증명 검증
     if (
@@ -62,7 +66,7 @@ export async function POST(request: NextRequest) {
     const memory = getAWSMemory(llm);
 
     // 컨텍스트 업데이트
-    memory.updateContext(accountId || "default", {
+    memory.updateContext(sessionId, {
       awsRegion: credentials.region,
       conversationPhase: "followup",
     });
@@ -107,7 +111,7 @@ export async function POST(request: NextRequest) {
 
       // 컨텍스트가 포함된 프롬프트 생성
       const contextualPrompt = await memory.getContextualPrompt(
-        accountId || "default",
+        sessionId,
         query
       );
 
@@ -123,10 +127,9 @@ export async function POST(request: NextRequest) {
       console.log("🤖 일반 쿼리로 n8n 워크플로우 호출");
 
       try {
-        // n8n 웹훅으로 일반 쿼리 처리 요청
+        // n8n 웹훅으로 일반 쿼리 처리 요청 (LangChain과 동일한 세션 ID 사용)
         const webhookUrl =
-          "http://localhost:5678/webhook/3c7a53f9-689e-4c4f-8cde-7cc487189bb4";
-        const sessionId = "default-session";
+          "http://13.125.245.132:5678/webhook/3c7a53f9-689e-4c4f-8cde-7cc487189bb4";
         const webhookPayload = {
           query: query,
           sessionId,
@@ -191,7 +194,7 @@ export async function POST(request: NextRequest) {
 
     if (needsAWSResourceQuery && awsResponse) {
       // AWS 리소스 조회가 실행된 경우
-      await memory.addMessage(accountId || "default", query, awsResponse.data);
+      await memory.addMessage(sessionId, query, awsResponse.data);
 
       result.data = awsResponse.data;
       result.info = awsResponse.usedLLM
@@ -199,11 +202,7 @@ export async function POST(request: NextRequest) {
         : "✅ AWS SDK를 통해 직접 조회되었습니다";
     } else if (usedN8nWebhook && workPlanResult?.success) {
       // n8n 워크플로우가 실행된 경우
-      await memory.addMessage(
-        accountId || "default",
-        query,
-        workPlanResult.workPlan
-      );
+      await memory.addMessage(sessionId, query, workPlanResult.workPlan);
 
       result.data = workPlanResult.workPlan;
       result.usedN8nWebhook = true;

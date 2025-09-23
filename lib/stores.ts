@@ -17,8 +17,6 @@ export interface ChatMessage {
   type: 'user' | 'ai' | 'system'
   content: string
   timestamp: Date
-  accountId?: string
-  conversationId?: string // 대화 세션 ID 추가
   refs?: Array<{
     title: string
     link: string
@@ -32,7 +30,7 @@ interface AppState {
   activeAccountId: string | null
 
   // 채팅 상태
-  messages: ChatMessage[]
+  messages: Map<string, ChatMessage[]> // accountId -> messages 매핑
   errorMessages: ChatMessage[]
   isLoading: boolean
   isErrorChatLoading: boolean
@@ -70,7 +68,7 @@ interface AppState {
 export const useAppStore = create<AppState>((set, get) => ({
   accounts: [],
   activeAccountId: null,
-  messages: [],
+  messages: new Map(),
   errorMessages: [],
   isLoading: false,
   isErrorChatLoading: false,
@@ -116,17 +114,37 @@ export const useAppStore = create<AppState>((set, get) => ({
     })),
     
   addMessage: (message) =>
-    set((state) => ({
-      messages: [...state.messages, message]
-    })),
+    set((state) => {
+      const activeAccountId = state.activeAccountId
+      if (!activeAccountId) return state
+
+      const accountMessages = state.messages.get(activeAccountId) || []
+      const newMessages = new Map(state.messages)
+      newMessages.set(activeAccountId, [...accountMessages, message])
+
+      return { messages: newMessages }
+    }),
 
   addErrorMessage: (message) =>
     set((state) => ({
       errorMessages: [...state.errorMessages, message]
     })),
 
-  clearMessages: () =>
-    set({ messages: [] }),
+  clearMessages: () => {
+    const state = get()
+    const activeAccountId = state.activeAccountId
+
+    if (!activeAccountId) return
+
+    // 현재 계정의 메시지만 클리어
+    const newMessages = new Map(state.messages)
+    newMessages.set(activeAccountId, [])
+
+    set({ messages: newMessages })
+
+    // 새로운 대화 세션 시작 (새로운 conversationId 생성)
+    state.startNewConversation(activeAccountId)
+  },
 
   clearErrorMessages: () =>
     set({ errorMessages: [] }),
@@ -141,13 +159,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ activeChatTab: tab }),
 
   startNewConversation: (accountId) => {
-    const conversationId = `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const conversationId = `${accountId}_conv_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`
     const newSessions = new Map(get().conversationSessions)
     newSessions.set(accountId, conversationId)
 
-    set((state) => ({
+    set({
       conversationSessions: newSessions,
-    }))
+    })
 
     return conversationId
   },
@@ -174,9 +192,15 @@ export const getActiveAccount = (): AWSAccount | null => {
 }
 
 export const generateAccountId = (): string => {
-  return `aws-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  return `aws-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
 }
 
 export const generateMessageId = (): string => {
-  return `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  return `msg-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
+}
+
+export const getActiveAccountMessages = (): ChatMessage[] => {
+  const { messages, activeAccountId } = useAppStore.getState()
+  if (!activeAccountId) return []
+  return messages.get(activeAccountId) || []
 }

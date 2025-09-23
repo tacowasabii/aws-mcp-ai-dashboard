@@ -1,9 +1,10 @@
 import { ConversationSummaryBufferMemory } from "langchain/memory";
 import { ChatBedrockConverse } from "@langchain/aws";
-import { HumanMessage, AIMessage, BaseMessage } from "@langchain/core/messages";
+import { HumanMessage, AIMessage } from "@langchain/core/messages";
 
 export interface ConversationContext {
-  accountId: string;
+  accountId: string; // AWS 계정 ID (실제 AWS 자격증명용)
+  sessionId: string; // 대화 세션 ID
   awsRegion: string;
   lastQueries: string[];
   activeResources: string[];
@@ -16,54 +17,61 @@ export class AWSConversationMemory {
 
   constructor(private llm: ChatBedrockConverse) {}
 
-  // 계정별 메모리 초기화
-  async getOrCreateMemory(accountId: string): Promise<ConversationSummaryBufferMemory> {
-    if (!this.memories.has(accountId)) {
+  // 세션별 메모리 초기화 (sessionId 직접 사용)
+  async getOrCreateMemory(sessionId: string): Promise<ConversationSummaryBufferMemory> {
+    if (!this.memories.has(sessionId)) {
       const memory = new ConversationSummaryBufferMemory({
         llm: this.llm,
         maxTokenLimit: 500, // 요약된 컨텍스트 최대 토큰 수
         returnMessages: true,
       });
-      this.memories.set(accountId, memory);
+      this.memories.set(sessionId, memory);
     }
-    return this.memories.get(accountId)!;
+    return this.memories.get(sessionId)!;
+  }
+
+  // sessionId에서 accountId 추출 헬퍼
+  private extractAccountId(sessionId: string): string {
+    return sessionId.includes('_conv_') ? sessionId.split('_conv_')[0] : sessionId;
   }
 
   // 컨텍스트 관리
-  updateContext(accountId: string, context: Partial<ConversationContext>) {
-    const existing = this.contexts.get(accountId) || {
+  updateContext(sessionId: string, context: Partial<ConversationContext>) {
+    const accountId = this.extractAccountId(sessionId);
+    const existing = this.contexts.get(sessionId) || {
       accountId,
+      sessionId,
       awsRegion: 'us-east-1',
       lastQueries: [],
       activeResources: [],
       conversationPhase: 'initial'
     };
 
-    this.contexts.set(accountId, { ...existing, ...context });
+    this.contexts.set(sessionId, { ...existing, ...context });
   }
 
-  getContext(accountId: string): ConversationContext | undefined {
-    return this.contexts.get(accountId);
+  getContext(sessionId: string): ConversationContext | undefined {
+    return this.contexts.get(sessionId);
   }
 
   // 메시지 추가 (자동 요약)
-  async addMessage(accountId: string, human: string, ai: string) {
-    const memory = await this.getOrCreateMemory(accountId);
+  async addMessage(sessionId: string, human: string, ai: string) {
+    const memory = await this.getOrCreateMemory(sessionId);
     await memory.chatHistory.addMessage(new HumanMessage(human));
     await memory.chatHistory.addMessage(new AIMessage(ai));
 
     // 컨텍스트 업데이트
-    const context = this.getContext(accountId);
+    const context = this.getContext(sessionId);
     if (context) {
       context.lastQueries = [...context.lastQueries.slice(-2), human]; // 최근 3개만 유지
-      this.updateContext(accountId, context);
+      this.updateContext(sessionId, context);
     }
   }
 
   // 컨텍스트가 포함된 프롬프트 생성
-  async getContextualPrompt(accountId: string, newQuery: string): Promise<string> {
-    const memory = await this.getOrCreateMemory(accountId);
-    const context = this.getContext(accountId);
+  async getContextualPrompt(sessionId: string, newQuery: string): Promise<string> {
+    const memory = await this.getOrCreateMemory(sessionId);
+    const context = this.getContext(sessionId);
 
     // 메모리에서 압축된 대화 히스토리 가져오기
     const memoryVariables = await memory.loadMemoryVariables({});
@@ -72,6 +80,7 @@ export class AWSConversationMemory {
     // AWS 특화 컨텍스트 구성
     const awsContext = context ? `
 AWS 계정: ${context.accountId}
+세션 ID: ${context.sessionId}
 지역: ${context.awsRegion}
 활성 리소스: ${context.activeResources.join(', ')}
 대화 단계: ${context.conversationPhase}
@@ -91,20 +100,6 @@ ${chatHistory}
 답변해주세요:`;
   }
 
-  // 메모리 정리 (토큰 절약)
-  async clearOldMemory(accountId: string) {
-    const memory = await this.getOrCreateMemory(accountId);
-    await memory.clear();
-  }
-
-  // 관련성 있는 이전 대화만 추출
-  async getRelevantHistory(accountId: string, query: string): Promise<BaseMessage[]> {
-    const memory = await this.getOrCreateMemory(accountId);
-    const messages = await memory.chatHistory.getMessages();
-
-    // 최근 4개 메시지만 반환 (사용자-AI 페어 2개)
-    return messages.slice(-4);
-  }
 }
 
 // 싱글톤 인스턴스
