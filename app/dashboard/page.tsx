@@ -203,12 +203,12 @@ export default function DashboardPage() {
           </div>
 
           {/* 사이드바 하단 */}
-          <div className="mt-auto px-6 pb-6">
+          <div className="mt-auto px-4 pb-6">
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-100">
               <div className="text-xs font-semibold text-slate-600 mb-1">
                 AI Assistant
               </div>
-              <div className="text-sm text-slate-700 leading-relaxed">
+              <div className="text-[13px] text-slate-700 leading-relaxed">
                 AWS 전문가가 모든 작업을 도와드립니다
               </div>
             </div>

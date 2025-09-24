@@ -34,12 +34,14 @@ export function WorkplanList() {
 
   const activeAccount = accounts.find((acc) => acc.id === activeAccountId);
 
-  const filteredWorkplans = workplans.filter(
-    (workplan) =>
-      workplan.id.toString().includes(searchTerm.toLowerCase()) ||
-      workplan.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      workplan.content?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredWorkplans = workplans
+    .filter(
+      (workplan) =>
+        workplan.id.toString().includes(searchTerm.toLowerCase()) ||
+        workplan.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        workplan.content?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
   const toggleExpanded = (index: number) => {
     setExpandedItems((prev) => {
@@ -67,8 +69,8 @@ export function WorkplanList() {
 
   if (!activeAccount) {
     return (
-      <div className="text-center py-4 text-gray-500">
-        <FileText size={24} className="mx-auto mb-2" />
+      <div className="flex flex-col items-center justify-center h-full text-gray-500">
+        <FileText size={24} className="mb-2" />
         <p>AWS 계정을 선택하세요</p>
       </div>
     );
@@ -159,7 +161,7 @@ export function WorkplanList() {
                         {workplan.title}
                       </h3>
                       <p className="text-xs text-gray-400 mt-1">
-                        {new Date(workplan.createdAt).toLocaleDateString(
+                        {new Date(workplan.updatedAt + 'Z').toLocaleDateString(
                           "ko-KR",
                           {
                             year: "numeric",
@@ -167,6 +169,7 @@ export function WorkplanList() {
                             day: "numeric",
                             hour: "2-digit",
                             minute: "2-digit",
+                            timeZone: "Asia/Seoul",
                           }
                         )}
                       </p>

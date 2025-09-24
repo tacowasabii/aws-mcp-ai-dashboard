@@ -358,8 +358,8 @@ export function AWSChat() {
 
   if (!activeAccount) {
     return (
-      <div className="text-center py-4 text-gray-500">
-        <Bot size={24} className="mx-auto mb-2" />
+      <div className="flex flex-col items-center justify-center h-full text-gray-500">
+        <Bot size={24} className="mb-2" />
         <p>AWS 계정을 선택하세요</p>
       </div>
     );

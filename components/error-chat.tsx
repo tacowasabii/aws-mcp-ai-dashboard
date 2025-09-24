@@ -35,17 +35,19 @@ export function ErrorChat() {
 
   const activeAccount = accounts.find((acc) => acc.id === activeAccountId);
 
-  const filteredSolutions = errorSolutions.filter(
-    (solution) =>
-      solution.cause?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      solution.solution_summary
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      solution.original_command
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      solution.fixed_command?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredSolutions = errorSolutions
+    .filter(
+      (solution) =>
+        solution.cause?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        solution.solution_summary
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        solution.original_command
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        solution.fixed_command?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   const toggleExpanded = (index: number) => {
     setExpandedItems((prev) => {
@@ -61,8 +63,8 @@ export function ErrorChat() {
 
   if (!activeAccount) {
     return (
-      <div className="text-center py-4 text-gray-500">
-        <AlertTriangle size={24} className="mx-auto mb-2" />
+      <div className="flex flex-col items-center justify-center h-full text-gray-500">
+        <AlertTriangle size={24} className="mb-2" />
         <p>AWS 계정을 선택하세요</p>
       </div>
     );
@@ -159,6 +161,7 @@ export function ErrorChat() {
                             day: "numeric",
                             hour: "2-digit",
                             minute: "2-digit",
+                            timeZone: "Asia/Seoul",
                           }
                         )}
                       </p>
