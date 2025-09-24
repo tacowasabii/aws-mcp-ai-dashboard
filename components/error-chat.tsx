@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAppStore } from "@/lib/stores";
 import {
   RotateCcw,
@@ -9,7 +9,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import { supabase } from "@/utils/supabase";
+import { useErrorSolutions } from "@/hooks/useSupabaseData";
 
 interface ErrorSolution {
   id: number;
@@ -26,34 +26,13 @@ interface ErrorSolution {
 
 export function ErrorChat() {
   const { activeAccountId, accounts } = useAppStore();
-  const [errorSolutions, setErrorSolutions] = useState<ErrorSolution[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
 
+  // SWR로 데이터 페칭, 캐싱 및 자동 새로고침
+  const { errorSolutions, isLoading, error, mutate } = useErrorSolutions();
+
   const activeAccount = accounts.find((acc) => acc.id === activeAccountId);
-
-  useEffect(() => {
-    fetchErrorSolutions();
-  }, []);
-
-  const fetchErrorSolutions = async () => {
-    try {
-      setIsLoading(true);
-      const { data, error } = await supabase.from("error_normal").select("*");
-
-      if (error) {
-        console.error("Error fetching data:", error);
-        return;
-      }
-
-      setErrorSolutions(data || []);
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const filteredSolutions = errorSolutions.filter(
     (solution) =>
@@ -96,7 +75,7 @@ export function ErrorChat() {
           <div className="flex items-center gap-2">
             <span>{filteredSolutions.length}개의 해결책</span>
             <button
-              onClick={fetchErrorSolutions}
+              onClick={() => mutate()}
               className="p-1 hover:bg-gray-100 rounded-md transition-colors"
               title="새로고침"
             >
@@ -129,6 +108,18 @@ export function ErrorChat() {
           <div className="text-center py-12">
             <div className="w-8 h-8 border-2 border-orange-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-500">에러 히스토리를 불러오는 중...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12 text-red-500">
+            <AlertTriangle size={32} className="mx-auto mb-4 text-red-400" />
+            <p className="text-lg mb-2">데이터 로드 실패</p>
+            <p className="text-sm text-red-400 mb-4">{error.message}</p>
+            <button
+              onClick={() => mutate()}
+              className="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+            >
+              다시 시도
+            </button>
           </div>
         ) : filteredSolutions.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
