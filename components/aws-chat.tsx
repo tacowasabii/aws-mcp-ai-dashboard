@@ -3,31 +3,26 @@
 import { useAppStore } from "@/lib/stores";
 import MDEditor from "@uiw/react-md-editor";
 import {
-  AlertTriangle,
   Bot,
   Check,
   ChevronDown,
   ChevronUp,
   Copy,
   Download,
-  MessageSquare,
   RotateCcw,
   Send,
   User,
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { ErrorChat } from "./error-chat";
 
 export function AWSChat() {
   const {
     activeAccountId,
     accounts,
     messages,
-    activeChatTab,
     addMessage,
     clearMessages,
-    setActiveChatTab,
     getConversationId,
     startNewConversation,
   } = useAppStore();
@@ -578,319 +573,278 @@ ${(() => {
 
   return (
     <div className="flex flex-col h-full">
-      {/* 탭 네비게이션 */}
-      <div className="flex border-b mb-4">
-        <button
-          onClick={() => setActiveChatTab("workflow")}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-            activeChatTab === "workflow"
-              ? "border-blue-500 text-blue-600"
-              : "border-transparent text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          <MessageSquare size={16} />
-          작업계획서 채팅
-          {accountMessages.length > 0 && (
-            <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full">
-              {accountMessages.length}
-            </span>
-          )}
-        </button>
-        <button
-          onClick={() => setActiveChatTab("error")}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-            activeChatTab === "error"
-              ? "border-orange-500 text-orange-600"
-              : "border-transparent text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          <AlertTriangle size={16} />
-          에러 히스토리
-        </button>
+      {/* 상태 표시 */}
+      <div className="text-xs text-gray-500 border-b py-2 mb-4 px-4">
+        <div className="flex justify-between items-center">
+          <span>🤖 Bedrock LLM + AWS SDK</span>
+          <div className="flex items-center gap-2">
+            <span>{activeAccount.region}</span>
+            <button
+              onClick={() => clearMessages()}
+              className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+              title="채팅 기록 초기화"
+            >
+              <RotateCcw size={14} className="text-gray-400" />
+            </button>
+          </div>
+        </div>
       </div>
 
-      {activeChatTab === "error" ? (
-        <ErrorChat />
-      ) : (
-        <>
-          {/* 상태 표시 */}
-          <div className="text-xs text-gray-500 border-b pb-2 mb-4 px-4">
-            <div className="flex justify-between items-center">
-              <span>🤖 Bedrock LLM + AWS SDK</span>
-              <div className="flex items-center gap-2">
-                <span>{activeAccount.region}</span>
+      {/* 채팅 메시지 영역 */}
+      <div
+        className="flex-1 overflow-y-auto border rounded-lg p-4 bg-gray-50 mx-4"
+        style={{ maxHeight: "calc(100vh - 16rem)", minHeight: "300px" }}
+      >
+        <div className="space-y-3">
+          {accountMessages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex items-start gap-2 ${
+                message.type === "user" ? "justify-end" : "justify-start"
+              }`}
+            >
+              {message.type === "ai" && (
+                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Bot size={12} className="text-blue-600" />
+                </div>
+              )}
+
+              <div className="flex flex-col gap-2">
+                <div className="relative group">
+                  <div
+                    data-color-mode="light"
+                    className={`max-w-md px-4 py-3 rounded-lg text-sm whitespace-pre-line break-words ${
+                      message.type === "user"
+                        ? "bg-blue-600 text-white"
+                        : "bg-white text-gray-800 shadow-sm border"
+                    }`}
+                  >
+                    {message.content}
+                  </div>
+
+                  {/* 복사 버튼과 마크다운 보기 버튼 - AI 메시지에만 표시 */}
+                  {message.type === "ai" && (
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100">
+                      <button
+                        onClick={() => openMarkdownModal(message.content)}
+                        className="p-1 rounded transition-all text-xs duration-200 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800"
+                        title="마크다운으로 보기"
+                      >
+                        Markdown
+                      </button>
+                      <button
+                        onClick={() => copyMessage(message.id, message.content)}
+                        className={`p-1 rounded transition-all duration-200 ${
+                          copiedMessages.has(message.id)
+                            ? "bg-green-100 text-green-600"
+                            : "bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800"
+                        }`}
+                        title={
+                          copiedMessages.has(message.id)
+                            ? "복사됨!"
+                            : "메시지 복사"
+                        }
+                      >
+                        {copiedMessages.has(message.id) ? (
+                          <Check size={14} />
+                        ) : (
+                          <Copy size={14} />
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* refs가 있는 경우 참조 링크 박스 표시 (AI 메시지에만) */}
+                {message.type === "ai" &&
+                  message.refs &&
+                  message.refs.length > 0 && (
+                    <div className="max-w-md">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="text-xs text-gray-500">📖 레퍼런스</div>
+                        {message.refs.length > 2 && (
+                          <button
+                            onClick={() => toggleRefsExpansion(message.id)}
+                            className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                          >
+                            {expandedRefs.has(message.id) ? (
+                              <>
+                                접기 <ChevronUp size={12} />
+                              </>
+                            ) : (
+                              <>
+                                펼쳐보기 <ChevronDown size={12} />
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {(expandedRefs.has(message.id)
+                          ? message.refs
+                          : message.refs.slice(0, 2)
+                        ).map((ref, index) => (
+                          <a
+                            key={index}
+                            href={ref.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block px-2 py-1 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded text-xs text-blue-700 hover:text-blue-800 transition-colors duration-200"
+                            title={ref.link}
+                          >
+                            {ref.title}
+                          </a>
+                        ))}
+                        {!expandedRefs.has(message.id) &&
+                          message.refs.length > 2 && (
+                            <span className="inline-block px-2 py-1 text-xs text-gray-500">
+                              +{message.refs.length - 2}개 더
+                            </span>
+                          )}
+                      </div>
+                    </div>
+                  )}
+              </div>
+
+              {message.type === "user" && (
+                <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
+                  <User size={12} className="text-gray-600" />
+                </div>
+              )}
+            </div>
+          ))}
+
+          {/* AI 응답 로딩 상태 - 현재 활성 계정에서만 표시 */}
+          {isLoading && loadingAccountId === activeAccountId && (
+            <div className="flex items-start gap-2 justify-start">
+              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                <Bot size={12} className="text-blue-600" />
+              </div>
+
+              <div className="max-w-md px-4 py-3 rounded-lg text-sm bg-white text-gray-800 shadow-sm border">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="ml-2 text-gray-500">
+                    AI가 답변을 생성중입니다...
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {accountMessages.length === 0 && !showResourceSelection && (
+            <div className="text-center py-12 text-gray-500">
+              <Bot size={32} className="mx-auto mb-4 text-gray-400" />
+              <p className="text-lg mb-2">AWS 전문 어시스턴트</p>
+              <p className="text-sm text-gray-400">
+                Bedrock LLM이 AWS 전문가로서 답변합니다. EC2/EKS/VPC는 실시간
+                데이터로, 다른 질문은 전문 지식으로 답변해드립니다.
+              </p>
+            </div>
+          )}
+
+          {/* 리소스 선택 화면 */}
+          {showResourceSelection && (
+            <div className="text-center py-12">
+              <Bot size={48} className="mx-auto mb-6 text-blue-500" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                어떤 AWS 리소스를 조회하시겠습니까?
+              </h3>
+              <p className="text-sm text-gray-500 mb-8">
+                원하는 리소스를 선택하면 자동으로 목록을 조회해드립니다.
+              </p>
+
+              <div className="flex flex-col gap-3 max-w-sm mx-auto">
                 <button
-                  onClick={() => clearMessages()}
-                  className="p-1 hover:bg-gray-100 rounded-md transition-colors"
-                  title="채팅 기록 초기화"
+                  onClick={() => handleResourceSelection("ec2")}
+                  disabled={isLoading}
+                  className="flex items-center justify-center gap-3 p-4 border-2 border-blue-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <RotateCcw size={14} className="text-gray-400" />
+                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <span className="text-orange-600 font-bold text-sm">
+                      EC2
+                    </span>
+                  </div>
+                  <div className="text-left">
+                    <div className="font-medium text-gray-900">
+                      EC2 인스턴스
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      가상 서버 인스턴스 조회
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleResourceSelection("eks")}
+                  disabled={isLoading}
+                  className="flex items-center justify-center gap-3 p-4 border-2 border-blue-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <span className="text-purple-600 font-bold text-sm">
+                      EKS
+                    </span>
+                  </div>
+                  <div className="text-left">
+                    <div className="font-medium text-gray-900">
+                      EKS 클러스터
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Kubernetes 클러스터 조회
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleResourceSelection("vpc")}
+                  disabled={isLoading}
+                  className="flex items-center justify-center gap-3 p-4 border-2 border-blue-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                    <span className="text-green-600 font-bold text-sm">
+                      VPC
+                    </span>
+                  </div>
+                  <div className="text-left">
+                    <div className="font-medium text-gray-900">
+                      VPC 네트워크
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      가상 프라이빗 클라우드 조회
+                    </div>
+                  </div>
                 </button>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* 채팅 메시지 영역 */}
-          <div
-            className="flex-1 overflow-y-auto border rounded-lg p-4 bg-gray-50 mx-4"
-            style={{ maxHeight: "calc(100vh - 20rem)", minHeight: "300px" }}
-          >
-            <div className="space-y-3">
-              {accountMessages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex items-start gap-2 ${
-                    message.type === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  {message.type === "ai" && (
-                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                      <Bot size={12} className="text-blue-600" />
-                    </div>
-                  )}
+          {/* 스크롤 참조 */}
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
 
-                  <div className="flex flex-col gap-2">
-                    <div className="relative group">
-                      <div
-                        data-color-mode="light"
-                        className={`max-w-md px-4 py-3 rounded-lg text-sm whitespace-pre-line break-words ${
-                          message.type === "user"
-                            ? "bg-blue-600 text-white"
-                            : "bg-white text-gray-800 shadow-sm border"
-                        }`}
-                      >
-                        {message.content}
-                      </div>
-
-                      {/* 복사 버튼과 마크다운 보기 버튼 - AI 메시지에만 표시 */}
-                      {message.type === "ai" && (
-                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100">
-                          <button
-                            onClick={() => openMarkdownModal(message.content)}
-                            className="p-1 rounded transition-all text-xs duration-200 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800"
-                            title="마크다운으로 보기"
-                          >
-                            Markdown
-                          </button>
-                          <button
-                            onClick={() =>
-                              copyMessage(message.id, message.content)
-                            }
-                            className={`p-1 rounded transition-all duration-200 ${
-                              copiedMessages.has(message.id)
-                                ? "bg-green-100 text-green-600"
-                                : "bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800"
-                            }`}
-                            title={
-                              copiedMessages.has(message.id)
-                                ? "복사됨!"
-                                : "메시지 복사"
-                            }
-                          >
-                            {copiedMessages.has(message.id) ? (
-                              <Check size={14} />
-                            ) : (
-                              <Copy size={14} />
-                            )}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* refs가 있는 경우 참조 링크 박스 표시 (AI 메시지에만) */}
-                    {message.type === "ai" &&
-                      message.refs &&
-                      message.refs.length > 0 && (
-                        <div className="max-w-md">
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="text-xs text-gray-500">
-                              📖 레퍼런스
-                            </div>
-                            {message.refs.length > 2 && (
-                              <button
-                                onClick={() => toggleRefsExpansion(message.id)}
-                                className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                              >
-                                {expandedRefs.has(message.id) ? (
-                                  <>
-                                    접기 <ChevronUp size={12} />
-                                  </>
-                                ) : (
-                                  <>
-                                    펼쳐보기 <ChevronDown size={12} />
-                                  </>
-                                )}
-                              </button>
-                            )}
-                          </div>
-                          <div className="flex flex-wrap gap-1">
-                            {(expandedRefs.has(message.id)
-                              ? message.refs
-                              : message.refs.slice(0, 2)
-                            ).map((ref, index) => (
-                              <a
-                                key={index}
-                                href={ref.link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-block px-2 py-1 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded text-xs text-blue-700 hover:text-blue-800 transition-colors duration-200"
-                                title={ref.link}
-                              >
-                                {ref.title}
-                              </a>
-                            ))}
-                            {!expandedRefs.has(message.id) &&
-                              message.refs.length > 2 && (
-                                <span className="inline-block px-2 py-1 text-xs text-gray-500">
-                                  +{message.refs.length - 2}개 더
-                                </span>
-                              )}
-                          </div>
-                        </div>
-                      )}
-                  </div>
-
-                  {message.type === "user" && (
-                    <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
-                      <User size={12} className="text-gray-600" />
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {/* AI 응답 로딩 상태 - 현재 활성 계정에서만 표시 */}
-              {isLoading && loadingAccountId === activeAccountId && (
-                <div className="flex items-start gap-2 justify-start">
-                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Bot size={12} className="text-blue-600" />
-                  </div>
-
-                  <div className="max-w-md px-4 py-3 rounded-lg text-sm bg-white text-gray-800 shadow-sm border">
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
-                      <span className="ml-2 text-gray-500">
-                        AI가 답변을 생성중입니다...
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {accountMessages.length === 0 && !showResourceSelection && (
-                <div className="text-center py-12 text-gray-500">
-                  <Bot size={32} className="mx-auto mb-4 text-gray-400" />
-                  <p className="text-lg mb-2">AWS 전문 어시스턴트</p>
-                  <p className="text-sm text-gray-400">
-                    Bedrock LLM이 AWS 전문가로서 답변합니다. EC2/EKS/VPC는
-                    실시간 데이터로, 다른 질문은 전문 지식으로 답변해드립니다.
-                  </p>
-                </div>
-              )}
-
-              {/* 리소스 선택 화면 */}
-              {showResourceSelection && (
-                <div className="text-center py-12">
-                  <Bot size={48} className="mx-auto mb-6 text-blue-500" />
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    어떤 AWS 리소스를 조회하시겠습니까?
-                  </h3>
-                  <p className="text-sm text-gray-500 mb-8">
-                    원하는 리소스를 선택하면 자동으로 목록을 조회해드립니다.
-                  </p>
-
-                  <div className="flex flex-col gap-3 max-w-sm mx-auto">
-                    <button
-                      onClick={() => handleResourceSelection("ec2")}
-                      disabled={isLoading}
-                      className="flex items-center justify-center gap-3 p-4 border-2 border-blue-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <span className="text-orange-600 font-bold text-sm">
-                          EC2
-                        </span>
-                      </div>
-                      <div className="text-left">
-                        <div className="font-medium text-gray-900">
-                          EC2 인스턴스
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          가상 서버 인스턴스 조회
-                        </div>
-                      </div>
-                    </button>
-
-                    <button
-                      onClick={() => handleResourceSelection("eks")}
-                      disabled={isLoading}
-                      className="flex items-center justify-center gap-3 p-4 border-2 border-blue-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <span className="text-purple-600 font-bold text-sm">
-                          EKS
-                        </span>
-                      </div>
-                      <div className="text-left">
-                        <div className="font-medium text-gray-900">
-                          EKS 클러스터
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Kubernetes 클러스터 조회
-                        </div>
-                      </div>
-                    </button>
-
-                    <button
-                      onClick={() => handleResourceSelection("vpc")}
-                      disabled={isLoading}
-                      className="flex items-center justify-center gap-3 p-4 border-2 border-blue-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                        <span className="text-green-600 font-bold text-sm">
-                          VPC
-                        </span>
-                      </div>
-                      <div className="text-left">
-                        <div className="font-medium text-gray-900">
-                          VPC 네트워크
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          가상 프라이빗 클라우드 조회
-                        </div>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* 스크롤 참조 */}
-              <div ref={messagesEndRef} />
-            </div>
-          </div>
-
-          {/* 입력 영역 */}
-          <form onSubmit={handleSubmit} className="flex gap-3 mt-4 px-4">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="AWS에 대해 무엇이든 질문하세요..."
-              className="flex-1 border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={isLoading}
-            />
-            <button
-              type="submit"
-              disabled={isLoading || !input.trim()}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {isLoading ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Send size={16} />
-              )}
-            </button>
-          </form>
-        </>
-      )}
+      {/* 입력 영역 */}
+      <form onSubmit={handleSubmit} className="flex gap-3 mt-4 px-4">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="AWS에 대해 무엇이든 질문하세요..."
+          className="flex-1 border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          disabled={isLoading}
+        />
+        <button
+          type="submit"
+          disabled={isLoading || !input.trim()}
+          className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+        >
+          {isLoading ? (
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <Send size={16} />
+          )}
+        </button>
+      </form>
 
       {/* 마크다운 뷰어 모달 */}
       {showMarkdownModal && (

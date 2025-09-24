@@ -90,7 +90,7 @@ export function ErrorChat() {
 
   return (
     <div>
-      <div className="text-xs text-gray-500 border-b pb-2 mb-4 px-4">
+      <div className="text-xs text-gray-500 border-b py-2 mb-4 px-4">
         <div className="flex justify-between items-center">
           <span>📚 에러 해결 라이브러리</span>
           <div className="flex items-center gap-2">

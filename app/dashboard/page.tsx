@@ -5,10 +5,13 @@ import { AddAccountModal } from "@/components/add-account-modal";
 import { AccountDropdown } from "@/components/account-dropdown";
 import { ConnectionStatus } from "@/components/connection-status";
 import { AWSChat } from "@/components/aws-chat";
+import { ErrorChat } from "@/components/error-chat";
 import { Terminal } from "@/components/terminal";
+import { useAppStore } from "@/lib/stores";
 
 export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { isErrorHistoryPanelOpen, setErrorHistoryPanelOpen } = useAppStore();
 
   return (
     <>
@@ -27,7 +30,7 @@ export default function DashboardPage() {
                 <h1 className="text-xl font-bold text-slate-800 leading-tight">
                   AWS AI
                 </h1>
-                <p className="text-sm text-slate-500 font-medium">Dashboard</p>
+                <p className="text-sm text-slate-500 font-medium">Assistant</p>
               </div>
             </div>
           </div>
@@ -104,6 +107,19 @@ export default function DashboardPage() {
                   </svg>
                   리소스 모니터링
                 </a>
+                <button
+                  onClick={() => setErrorHistoryPanelOpen(!isErrorHistoryPanelOpen)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                    isErrorHistoryPanelOpen
+                      ? "text-orange-600 bg-orange-50 border border-orange-200"
+                      : "text-slate-600 hover:text-slate-800 hover:bg-slate-50"
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.936-.833-2.707 0L4.107 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  에러 히스토리
+                </button>
                 <a href="#" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -126,24 +142,46 @@ export default function DashboardPage() {
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-100">
               <div className="text-xs font-semibold text-slate-600 mb-1">AI Assistant</div>
               <div className="text-sm text-slate-700 leading-relaxed">
-                AWS 리소스를 효율적으로 관리하세요
+                AWS 전문가가 모든 작업을 도와드립니다
               </div>
             </div>
           </div>
         </aside>
 
         {/* 메인 컨텐츠 영역 */}
-        <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <div className="flex-1 p-6 overflow-hidden">
+        <main className="flex-1 flex min-w-0 overflow-hidden">
+          {/* AWS 리소스 조회 영역 */}
+          <div className={`${isErrorHistoryPanelOpen ? "flex-1" : "w-full"} flex flex-col p-6 overflow-hidden`}>
             <div className="h-full bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0">
-                <h2 className="text-lg font-semibold text-gray-900">AWS 리소스 조회</h2>
+                <h2 className="text-lg font-semibold text-gray-900">AWS AI 어시스턴트</h2>
               </div>
               <div className="flex-1 min-h-0 overflow-hidden">
                 <AWSChat />
               </div>
             </div>
           </div>
+
+          {/* 에러 히스토리 사이드 패널 */}
+          {isErrorHistoryPanelOpen && (
+            <div className="w-96 border-l border-gray-200 bg-white flex flex-col overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900">에러 히스토리</h2>
+                <button
+                  onClick={() => setErrorHistoryPanelOpen(false)}
+                  className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+                  title="패널 닫기"
+                >
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="flex-1 min-h-0 overflow-hidden">
+                <ErrorChat />
+              </div>
+            </div>
+          )}
         </main>
       </div>
 

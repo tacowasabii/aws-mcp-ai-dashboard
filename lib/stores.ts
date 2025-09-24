@@ -37,6 +37,9 @@ interface AppState {
   conversationSessions: Map<string, string> // accountId -> conversationId 매핑
   activeChatTab: 'workflow' | 'error'
 
+  // 에러 히스토리 사이드 패널 상태
+  isErrorHistoryPanelOpen: boolean
+
   // 터미널 상태
   isTerminalOpen: boolean
   isTerminalMinimized: boolean
@@ -58,6 +61,9 @@ interface AppState {
   startNewConversation: (accountId: string) => string // 새 대화 세션 시작
   getConversationId: (accountId: string) => string | undefined
 
+  // 에러 히스토리 패널 액션들
+  setErrorHistoryPanelOpen: (open: boolean) => void
+
   // 터미널 액션들
   setTerminalOpen: (open: boolean) => void
   setTerminalMinimized: (minimized: boolean) => void
@@ -74,6 +80,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   isErrorChatLoading: false,
   conversationSessions: new Map(),
   activeChatTab: 'workflow',
+
+  // 에러 히스토리 패널 초기 상태
+  isErrorHistoryPanelOpen: false,
 
   // 터미널 초기 상태
   isTerminalOpen: false,
@@ -173,6 +182,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   getConversationId: (accountId) => {
     return get().conversationSessions.get(accountId)
   },
+
+  // 에러 히스토리 패널 액션 구현
+  setErrorHistoryPanelOpen: (open) =>
+    set({ isErrorHistoryPanelOpen: open }),
 
   // 터미널 액션 구현
   setTerminalOpen: (open) =>
