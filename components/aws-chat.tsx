@@ -34,6 +34,11 @@ export function AWSChat() {
   const [copiedMessages, setCopiedMessages] = useState<Set<string>>(new Set());
   const [showMarkdownModal, setShowMarkdownModal] = useState(false);
   const [markdownContent, setMarkdownContent] = useState("");
+  // 규칙(컨벤션) 모달 상태
+  const [showConventionModal, setShowConventionModal] = useState(false);
+  const [conventionText, setConventionText] = useState("");
+  const [isConventionLoading, setIsConventionLoading] = useState(false);
+  const [isConventionSaving, setIsConventionSaving] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const activeAccount = accounts.find((acc) => acc.id === activeAccountId);
@@ -371,6 +376,60 @@ ${(() => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  // 규칙(컨벤션) 모달 열기: GET으로 기본값 불러오기
+  const openConventionModal = async () => {
+    setShowConventionModal(true);
+    setIsConventionLoading(true);
+    try {
+      const resp = await fetch("/api/convention", { method: "GET" });
+      const data = await resp.json();
+
+      // 다양한 응답 형태 대응
+      let defaultText = "";
+      if (typeof data === "string") {
+        defaultText = data;
+      } else if (typeof data?.output === "string") {
+        defaultText = data.output;
+      } else if (typeof data?.output?.convention === "string") {
+        defaultText = data.output.convention;
+      } else if (typeof data?.convention === "string") {
+        defaultText = data.convention;
+      } else {
+        defaultText = JSON.stringify(data, null, 2);
+      }
+      setConventionText(defaultText);
+    } catch (e) {
+      setConventionText("");
+      console.warn("컨벤션 GET 실패", e);
+    } finally {
+      setIsConventionLoading(false);
+    }
+  };
+
+  // 규칙(컨벤션) 저장 POST
+  const postConvention = async () => {
+    try {
+      await fetch("/api/convention", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ convention: conventionText }),
+      });
+    } catch (e) {
+      console.warn("컨벤션 POST 실패", e);
+    }
+  };
+
+  // 닫기 동작도 저장과 동일하게 POST 후 닫기
+  const handleCloseConventionModal = async () => {
+    setIsConventionSaving(true);
+    try {
+      await postConvention();
+    } finally {
+      setIsConventionSaving(false);
+      setShowConventionModal(false);
+    }
   };
 
   const handleResourceSelection = async (resourceType: string) => {
@@ -825,6 +884,15 @@ ${(() => {
 
       {/* 입력 영역 */}
       <form onSubmit={handleSubmit} className="flex gap-3 mt-4 px-4">
+        <button
+          type="button"
+          onClick={openConventionModal}
+          className="px-4 py-3 border rounded-lg text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed gap-1"
+          disabled={isLoading}
+          title="규칙(컨벤션) 관리"
+        >
+          규칙
+        </button>
         <input
           type="text"
           value={input}
@@ -903,6 +971,71 @@ ${(() => {
                   }}
                 />
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 규칙(컨벤션) 모달 */}
+      {showConventionModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={handleCloseConventionModal}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 헤더 */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">규칙 설정</h3>
+              <button
+                onClick={handleCloseConventionModal}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                title="저장 후 닫기"
+              >
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
+
+            {/* 본문 */}
+            <div className="p-4 px-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+              {isConventionLoading ? (
+                <div className="flex items-center gap-2 text-gray-500">
+                  <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                  <span>규칙을 불러오는 중...</span>
+                </div>
+              ) : (
+                <>
+                  <label className="block text-sm text-gray-600 mb-2">
+                    규칙 텍스트
+                  </label>
+                  <textarea
+                    value={conventionText}
+                    onChange={(e) => setConventionText(e.target.value)}
+                    className="w-full border rounded-lg p-3 text-sm min-h-[200px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="예) Policy Name=policy-CSR_{CSR_no}, Catoz=CSR{CSR_no} 태그를 반드시 추가한다."
+                    disabled={isConventionSaving}
+                  />
+                  <p className="mt-2 text-xs text-gray-400">
+                    저장 또는 닫기 시 규칙이 업데이트됩니다.
+                  </p>
+                </>
+              )}
+            </div>
+
+            {/* 푸터 */}
+            <div className="flex items-center justify-end gap-2 p-4 border-t bg-gray-50">
+              <button
+                onClick={handleCloseConventionModal}
+                disabled={isConventionLoading || isConventionSaving}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isConventionSaving ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : null}
+                저장
+              </button>
             </div>
           </div>
         </div>
