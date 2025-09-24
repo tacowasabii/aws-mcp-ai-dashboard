@@ -42,7 +42,9 @@ export function AWSChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const activeAccount = accounts.find((acc) => acc.id === activeAccountId);
-  const accountMessages = activeAccountId ? messages.get(activeAccountId) || [] : [];
+  const accountMessages = activeAccountId
+    ? messages.get(activeAccountId) || []
+    : [];
 
   // 메시지 개수를 추적하여 실제로 메시지가 추가될 때만 스크롤
   const [prevMessageCount, setPrevMessageCount] = useState(0);
@@ -58,7 +60,12 @@ export function AWSChat() {
         startNewConversation(activeAccountId);
       }
     }
-  }, [activeAccountId, accountMessages.length, getConversationId, startNewConversation]);
+  }, [
+    activeAccountId,
+    accountMessages.length,
+    getConversationId,
+    startNewConversation,
+  ]);
 
   useEffect(() => {
     if (accountMessages.length > prevMessageCount) {
@@ -607,7 +614,7 @@ ${(() => {
       ) : (
         <>
           {/* 상태 표시 */}
-          <div className="text-xs text-gray-500 border-b pb-2 mb-4">
+          <div className="text-xs text-gray-500 border-b pb-2 mb-4 px-4">
             <div className="flex justify-between items-center">
               <span>🤖 Bedrock LLM + AWS SDK</span>
               <div className="flex items-center gap-2">
@@ -625,7 +632,7 @@ ${(() => {
 
           {/* 채팅 메시지 영역 */}
           <div
-            className="flex-1 overflow-y-auto border rounded-lg p-4 bg-gray-50"
+            className="flex-1 overflow-y-auto border rounded-lg p-4 bg-gray-50 mx-4"
             style={{ maxHeight: "calc(100vh - 20rem)", minHeight: "300px" }}
           >
             <div className="space-y-3">
@@ -861,7 +868,7 @@ ${(() => {
           </div>
 
           {/* 입력 영역 */}
-          <form onSubmit={handleSubmit} className="flex gap-3 mt-4">
+          <form onSubmit={handleSubmit} className="flex gap-3 mt-4 px-4">
             <input
               type="text"
               value={input}

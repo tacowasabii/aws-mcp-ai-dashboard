@@ -5,7 +5,6 @@ import { useAppStore } from "@/lib/stores";
 import {
   RotateCcw,
   AlertTriangle,
-  CheckCircle,
   Search,
   ChevronDown,
   ChevronUp,
@@ -13,12 +12,16 @@ import {
 import { supabase } from "@/utils/supabase";
 
 interface ErrorSolution {
-  error_code: string;
-  error_description: string;
+  id: number;
   original_command: string;
+  error_message: string;
+  cause: string;
+  solution_summary: string;
+  steps: string[];
   fixed_command: string;
-  explanation: string;
-  related_documentation: string;
+  documentation_links: string[];
+  ai_message: string;
+  created_at: string;
 }
 
 export function ErrorChat() {
@@ -37,7 +40,7 @@ export function ErrorChat() {
   const fetchErrorSolutions = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase.from("prompthon").select("*");
+      const { data, error } = await supabase.from("error_normal").select("*");
 
       if (error) {
         console.error("Error fetching data:", error);
@@ -54,8 +57,8 @@ export function ErrorChat() {
 
   const filteredSolutions = errorSolutions.filter(
     (solution) =>
-      solution.error_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      solution.error_description
+      solution.cause?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      solution.solution_summary
         ?.toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
       solution.original_command
@@ -86,8 +89,8 @@ export function ErrorChat() {
   }
 
   return (
-    <>
-      <div className="text-xs text-gray-500 border-b pb-2 mb-4">
+    <div>
+      <div className="text-xs text-gray-500 border-b pb-2 mb-4 px-4">
         <div className="flex justify-between items-center">
           <span>📚 에러 해결 라이브러리</span>
           <div className="flex items-center gap-2">
@@ -104,7 +107,7 @@ export function ErrorChat() {
       </div>
 
       {/* 검색 박스 */}
-      <div className="mb-4">
+      <div className="mb-4 px-4">
         <div className="relative">
           <Search size={16} className="absolute left-3 top-3 text-gray-400" />
           <input
@@ -119,7 +122,7 @@ export function ErrorChat() {
 
       {/* 에러 해결책 목록 */}
       <div
-        className="flex-1 overflow-y-auto space-y-4"
+        className="flex-1 overflow-y-auto space-y-4 px-4"
         style={{ maxHeight: "calc(100vh - 16rem)", minHeight: "300px" }}
       >
         {isLoading ? (
@@ -153,11 +156,11 @@ export function ErrorChat() {
                     />
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-gray-900 truncate">
-                        {solution.error_code || "에러 코드 없음"}
+                        {solution.id || "에러 코드 없음"}
                       </h3>
-                      {solution.error_description && (
+                      {solution.solution_summary && (
                         <p className="text-sm text-gray-600 mt-1 break-words line-clamp-2">
-                          {solution.error_description}
+                          {solution.solution_summary}
                         </p>
                       )}
                     </div>
@@ -176,13 +179,13 @@ export function ErrorChat() {
                   <div className="px-4 pb-4 border-t border-gray-100">
                     <div className="pt-4 space-y-4">
                       {/* 에러 설명 */}
-                      {solution.error_description && (
+                      {solution.cause && (
                         <div className="w-full">
                           <h4 className="text-sm font-medium text-gray-700 mb-2">
                             문제 설명
                           </h4>
                           <p className="text-sm text-gray-600 bg-red-50 p-3 rounded border-l-4 border-red-200 break-words">
-                            {solution.error_description}
+                            {solution.cause}
                           </p>
                         </div>
                       )}
@@ -216,13 +219,13 @@ export function ErrorChat() {
                       )}
 
                       {/* 설명 */}
-                      {solution.explanation && (
+                      {solution.solution_summary && (
                         <div className="w-full">
                           <h4 className="text-sm font-medium text-gray-700 mb-2">
                             해결 방법 설명
                           </h4>
                           <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded break-words">
-                            {solution.explanation}
+                            {solution.solution_summary}
                           </p>
                         </div>
                       )}
@@ -234,6 +237,6 @@ export function ErrorChat() {
           })
         )}
       </div>
-    </>
+    </div>
   );
 }
