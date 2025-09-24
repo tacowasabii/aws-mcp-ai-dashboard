@@ -40,6 +40,9 @@ interface AppState {
   // 에러 히스토리 사이드 패널 상태
   isErrorHistoryPanelOpen: boolean
 
+  // 작업계획서 목록 사이드 패널 상태
+  isWorkplanListPanelOpen: boolean
+
   // 터미널 상태
   isTerminalOpen: boolean
   isTerminalMinimized: boolean
@@ -64,6 +67,9 @@ interface AppState {
   // 에러 히스토리 패널 액션들
   setErrorHistoryPanelOpen: (open: boolean) => void
 
+  // 작업계획서 목록 패널 액션들
+  setWorkplanListPanelOpen: (open: boolean) => void
+
   // 터미널 액션들
   setTerminalOpen: (open: boolean) => void
   setTerminalMinimized: (minimized: boolean) => void
@@ -83,6 +89,9 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   // 에러 히스토리 패널 초기 상태
   isErrorHistoryPanelOpen: false,
+
+  // 작업계획서 목록 패널 초기 상태
+  isWorkplanListPanelOpen: false,
 
   // 터미널 초기 상태
   isTerminalOpen: false,
@@ -186,6 +195,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   // 에러 히스토리 패널 액션 구현
   setErrorHistoryPanelOpen: (open) =>
     set({ isErrorHistoryPanelOpen: open }),
+
+  // 작업계획서 목록 패널 액션 구현
+  setWorkplanListPanelOpen: (open) =>
+    set({ isWorkplanListPanelOpen: open }),
 
   // 터미널 액션 구현
   setTerminalOpen: (open) =>

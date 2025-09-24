@@ -576,7 +576,7 @@ ${(() => {
       {/* 상태 표시 */}
       <div className="text-xs text-gray-500 border-b py-2 mb-4 px-4">
         <div className="flex justify-between items-center">
-          <span>🤖 Bedrock LLM + AWS SDK</span>
+          <span>🤖 Bedrock LLM + AWS SDK + n8n</span>
           <div className="flex items-center gap-2">
             <span>{activeAccount.region}</span>
             <button
