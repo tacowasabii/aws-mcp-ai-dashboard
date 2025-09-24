@@ -1,19 +1,18 @@
 "use client";
 
 import { useAppStore } from "@/lib/stores";
-import MDEditor from "@uiw/react-md-editor";
 import {
   Bot,
   Check,
   ChevronDown,
   ChevronUp,
   Copy,
-  Download,
   RotateCcw,
   Send,
   User,
   X,
 } from "lucide-react";
+import { MarkdownModal } from "./markdown-modal";
 import { useEffect, useRef, useState } from "react";
 
 export function AWSChat() {
@@ -112,270 +111,6 @@ export function AWSChat() {
   const closeMarkdownModal = () => {
     setShowMarkdownModal(false);
     setMarkdownContent("");
-  };
-
-  const exportAsHTML = () => {
-    // HTML 템플릿 생성
-    const htmlContent = `
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AWS Chat - Markdown Export</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 40px 20px;
-            color: #1f2937;
-            background-color: #ffffff;
-        }
-        h1, h2, h3, h4, h5, h6 {
-            color: #111827;
-            margin-top: 24px;
-            margin-bottom: 16px;
-        }
-        h1 { font-size: 2em; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
-        h2 { font-size: 1.5em; }
-        h3 { font-size: 1.17em; }
-        code {
-            background-color: #f3f4f6;
-            padding: 2px 4px;
-            border-radius: 3px;
-            font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', monospace;
-            font-size: 0.9em;
-        }
-        pre {
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 20px;
-            overflow-x: auto;
-            margin: 16px 0;
-            position: relative;
-        }
-        pre code {
-            background-color: transparent;
-            padding: 0;
-            font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', Consolas, 'Courier New', monospace;
-            font-size: 0.875em;
-            line-height: 1.5;
-            color: #334155;
-        }
-        pre[class*="language-"] {
-            background-color: #1e293b;
-            border-color: #334155;
-        }
-        pre[class*="language-"] code {
-            color: #e2e8f0;
-        }
-        .language-bash::before,
-        .language-sh::before,
-        .language-shell::before {
-            content: "Bash";
-            position: absolute;
-            top: 8px;
-            right: 12px;
-            background: #059669;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-        .language-javascript::before,
-        .language-js::before {
-            content: "JavaScript";
-            position: absolute;
-            top: 8px;
-            right: 12px;
-            background: #f59e0b;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-        .language-python::before,
-        .language-py::before {
-            content: "Python";
-            position: absolute;
-            top: 8px;
-            right: 12px;
-            background: #3b82f6;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-        .language-json::before {
-            content: "JSON";
-            position: absolute;
-            top: 8px;
-            right: 12px;
-            background: #8b5cf6;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-        blockquote {
-            border-left: 4px solid #e5e7eb;
-            margin: 0;
-            padding-left: 16px;
-            color: #6b7280;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 16px 0;
-        }
-        th, td {
-            border: 1px solid #e5e7eb;
-            padding: 8px 12px;
-            text-align: left;
-        }
-        th {
-            background-color: #f9fafb;
-            font-weight: 600;
-        }
-        a {
-            color: #2563eb;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-        .export-header {
-            text-align: center;
-            margin-bottom: 40px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e5e7eb;
-        }
-        .export-footer {
-            text-align: center;
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e5e7eb;
-            color: #6b7280;
-            font-size: 0.9em;
-        }
-    </style>
-</head>
-<body>
-    <div class="export-header">
-        <h1>AWS Chat - AI 응답</h1>
-        <p>생성일: ${new Date().toLocaleDateString("ko-KR", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })}</p>
-    </div>
-
-    <div class="markdown-content">
-${(() => {
-  const lines = markdownContent.split("\n");
-  let inCodeBlock = false;
-  let codeLanguage = "";
-
-  return lines
-    .map((line, index) => {
-      let html = line;
-
-      // 코드 블록 처리
-      if (line.startsWith("```")) {
-        if (!inCodeBlock) {
-          // 코드 블록 시작
-          inCodeBlock = true;
-          codeLanguage = line.substring(3).trim();
-          return `<pre><code class="language-${codeLanguage || "text"}">`;
-        } else {
-          // 코드 블록 끝
-          inCodeBlock = false;
-          return "</code></pre>";
-        }
-      }
-
-      // 코드 블록 내부인 경우 HTML 이스케이프
-      if (inCodeBlock) {
-        return html
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#x27;");
-      }
-
-      // 헤더 변환
-      html = html.replace(/^### (.+)$/, "<h3>$1</h3>");
-      html = html.replace(/^## (.+)$/, "<h2>$1</h2>");
-      html = html.replace(/^# (.+)$/, "<h1>$1</h1>");
-
-      // 볼드 텍스트
-      html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-
-      // 이탤릭 텍스트 (볼드가 처리된 후)
-      html = html.replace(/\*([^*]+?)\*/g, "<em>$1</em>");
-
-      // 인라인 코드
-      html = html.replace(/`([^`]+?)`/g, "<code>$1</code>");
-
-      // 링크 (새창에서 열리도록)
-      html = html.replace(
-        /\[(.+?)\]\((.+?)\)/g,
-        '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
-      );
-
-      // 리스트 아이템
-      html = html.replace(/^- (.+)$/, "<li>$1</li>");
-      html = html.replace(/^\* (.+)$/, "<li>$1</li>");
-      html = html.replace(/^\d+\. (.+)$/, "<li>$1</li>");
-
-      // 빈 줄
-      if (html.trim() === "") {
-        return "<br>";
-      }
-
-      // 일반 텍스트는 p 태그로 감싸기 (헤더나 리스트가 아닌 경우)
-      if (
-        !html.startsWith("<h") &&
-        !html.startsWith("<pre") &&
-        !html.startsWith("<br") &&
-        !html.startsWith("<li") &&
-        html.trim() !== ""
-      ) {
-        html = `<p>${html}</p>`;
-      }
-
-      return html;
-    })
-    .join("\n");
-})()}
-    </div>
-
-    <div class="export-footer">
-        <p>AWS AI Dashboard에서 생성됨</p>
-    </div>
-</body>
-</html>`;
-
-    // 파일 다운로드
-    const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `aws-chat-export-${new Date().getTime()}.html`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
   };
 
   // 규칙(컨벤션) 모달 열기: GET으로 기본값 불러오기
@@ -652,7 +387,7 @@ ${(() => {
       {/* 채팅 메시지 영역 */}
       <div
         className="flex-1 overflow-y-auto border rounded-lg p-4 bg-gray-50 mx-4"
-        style={{ maxHeight: "calc(100vh - 16rem)", minHeight: "300px" }}
+        style={{ maxHeight: "calc(100vh - 15rem)", minHeight: "300px" }}
       >
         <div className="space-y-3">
           {accountMessages.map((message) => (
@@ -914,67 +649,13 @@ ${(() => {
         </button>
       </form>
 
-      {/* 마크다운 뷰어 모달 */}
-      {showMarkdownModal && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={closeMarkdownModal}
-        >
-          <div
-            className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* 모달 헤더 */}
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">
-                마크다운 미리보기
-              </h3>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={exportAsHTML}
-                  className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  title="HTML로 다운로드"
-                >
-                  <Download size={16} />
-                  Export
-                </button>
-                <button
-                  onClick={closeMarkdownModal}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <X size={20} className="text-gray-500" />
-                </button>
-              </div>
-            </div>
-
-            {/* 모달 내용 */}
-            <div
-              className="p-4 px-6 overflow-y-auto max-h-[calc(90vh-120px)]"
-              onClick={(e) => {
-                // 마크다운 내의 모든 링크를 새창에서 열도록 설정
-                const target = e.target as HTMLElement;
-                if (target.tagName === "A") {
-                  e.preventDefault();
-                  const href = target.getAttribute("href");
-                  if (href) {
-                    window.open(href, "_blank", "noopener,noreferrer");
-                  }
-                }
-              }}
-            >
-              <div data-color-mode="light">
-                <MDEditor.Markdown
-                  source={markdownContent}
-                  style={{
-                    backgroundColor: "transparent",
-                    color: "#1f2937",
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 마크다운 모달 */}
+      <MarkdownModal
+        isOpen={showMarkdownModal}
+        onClose={closeMarkdownModal}
+        title="AWS Chat - 마크다운 미리보기"
+        content={markdownContent}
+      />
 
       {/* 규칙(컨벤션) 모달 */}
       {showConventionModal && (

@@ -22,6 +22,7 @@ interface ErrorSolution {
   documentation_links: string[];
   ai_message: string;
   created_at: string;
+  error_code: string;
 }
 
 export function ErrorChat() {
@@ -102,7 +103,7 @@ export function ErrorChat() {
       {/* 에러 해결책 목록 */}
       <div
         className="flex-1 overflow-y-auto space-y-4 px-4"
-        style={{ maxHeight: "calc(100vh - 16rem)", minHeight: "300px" }}
+        style={{ maxHeight: "calc(100vh - 12rem)", minHeight: "300px" }}
       >
         {isLoading ? (
           <div className="text-center py-12">
@@ -128,7 +129,7 @@ export function ErrorChat() {
             <p className="text-sm text-gray-400">다른 키워드로 검색해보세요.</p>
           </div>
         ) : (
-          filteredSolutions.map((solution, index) => {
+          filteredSolutions.map((solution: ErrorSolution, index) => {
             const isExpanded = expandedItems.has(index);
             return (
               <div
@@ -147,13 +148,20 @@ export function ErrorChat() {
                     />
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-gray-900 truncate">
-                        {solution.id || "에러 코드 없음"}
+                        {solution.error_code || "에러 코드 없음"}
                       </h3>
-                      {solution.solution_summary && (
-                        <p className="text-sm text-gray-600 mt-1 break-words line-clamp-2">
-                          {solution.solution_summary}
-                        </p>
-                      )}
+                      <p className="text-xs text-gray-400 mt-1">
+                        {new Date(solution.created_at).toLocaleDateString(
+                          "ko-KR",
+                          {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
@@ -209,15 +217,22 @@ export function ErrorChat() {
                         </div>
                       )}
 
-                      {/* 설명 */}
-                      {solution.solution_summary && (
+                      {/* 단계별 해결방법 */}
+                      {solution.steps && solution.steps.length > 0 && (
                         <div className="w-full">
                           <h4 className="text-sm font-medium text-gray-700 mb-2">
-                            해결 방법 설명
+                            해결 단계
                           </h4>
-                          <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded break-words">
-                            {solution.solution_summary}
-                          </p>
+                          <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded break-words">
+                            {solution.steps.map((step, index) => (
+                              <div key={index} className="mb-2 last:mb-0">
+                                <span className="font-medium">
+                                  {index + 1}.{" "}
+                                </span>
+                                {step}
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>

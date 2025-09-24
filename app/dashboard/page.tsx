@@ -239,7 +239,7 @@ export default function DashboardPage() {
 
           {/* 작업계획서 목록 사이드 패널 */}
           {isWorkplanListPanelOpen && (
-            <div className="w-96 border-l border-gray-200 bg-white flex flex-col overflow-hidden">
+            <div className="w-[28rem] border-l border-gray-200 bg-white flex flex-col overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0 flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-gray-900">
                   작업계획서 목록
@@ -272,7 +272,7 @@ export default function DashboardPage() {
 
           {/* 에러 히스토리 사이드 패널 */}
           {isErrorHistoryPanelOpen && (
-            <div className="w-96 border-l border-gray-200 bg-white flex flex-col overflow-hidden">
+            <div className="w-[28rem] border-l border-gray-200 bg-white flex flex-col overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0 flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-gray-900">
                   에러 히스토리
