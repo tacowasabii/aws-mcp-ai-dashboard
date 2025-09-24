@@ -386,10 +386,10 @@ export function AWSChat() {
 
       {/* 채팅 메시지 영역 */}
       <div
-        className="flex-1 overflow-y-auto border rounded-lg p-4 bg-gray-50 mx-4"
+        className="flex-1 overflow-y-auto border rounded-lg p-4 bg-gray-50 mx-4 flex flex-col"
         style={{ maxHeight: "calc(100vh - 15rem)", minHeight: "300px" }}
       >
-        <div className="space-y-3">
+        <div className="space-y-3 flex-1 flex flex-col">
           {accountMessages.map((message) => (
             <div
               key={message.id}
@@ -539,7 +539,7 @@ export function AWSChat() {
 
           {/* 리소스 선택 화면 */}
           {showResourceSelection && (
-            <div className="text-center py-12">
+            <div className="flex flex-col items-center justify-center flex-1 text-center">
               <Bot size={48} className="mx-auto mb-6 text-blue-500" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
                 어떤 AWS 리소스를 조회하시겠습니까?
@@ -548,7 +548,7 @@ export function AWSChat() {
                 원하는 리소스를 선택하면 자동으로 목록을 조회해드립니다.
               </p>
 
-              <div className="flex flex-col gap-3 max-w-sm mx-auto">
+              <div className="flex flex-col gap-3 max-w-md mx-auto w-full px-4">
                 <button
                   onClick={() => handleResourceSelection("ec2")}
                   disabled={isLoading}
